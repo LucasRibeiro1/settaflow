@@ -3,7 +3,7 @@ import protheusApi from './protheusApi'
 export const authService = {
   async login(username, password) {
     const { data } = await protheusApi.post(
-      '/rest/STWS023P/',
+      '/rest/STWS023P/validar',
       { cUser: username, cSenha: password },
       { auth: { username, password } }
     )
