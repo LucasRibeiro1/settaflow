@@ -1,0 +1,96 @@
+.cliente-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.cliente-kpi-row {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.cliente-kpi {
+  flex: 1;
+  padding: 16px 20px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cliente-kpi:last-child { border-right: none; }
+
+.kpi-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.kpi-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.kpi-danger { color: var(--danger) !important; }
+.kpi-info { color: var(--primary) !important; }
+.kpi-small { font-size: 0.75rem !important; font-weight: 500 !important; }
+
+@media (max-width: 1200px) {
+  .cliente-kpi-row { flex-wrap: wrap; }
+  .cliente-kpi { min-width: calc(50% - 1px); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+}
+
+/* Tabs */
+.tabs-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab-btn {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--transition);
+  font-family: inherit;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-active { color: var(--primary) !important; border-bottom-color: var(--primary) !important; font-weight: 600 !important; }
+
+.tab-content { animation: fadeIn 0.2s ease; }
+
+/* Info grid used in tabs */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .info-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.info-field { display: flex; flex-direction: column; gap: 3px; }
+.info-field-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.info-field-value {
+  font-size: 0.825rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}

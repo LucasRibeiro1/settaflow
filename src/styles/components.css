@@ -1,0 +1,47 @@
+/* Shared data-table style used across multiple pages */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tfoot td {
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  border-top: 2px solid var(--border);
+}
+
+.row-clickable { cursor: pointer; transition: background 0.1s; }
+.row-clickable:hover td { background: var(--bg); }
+
+.sort-icon { font-size: 0.7rem; color: var(--text-muted); margin-left: 3px; }
+.sort-icon.active { color: var(--primary); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}
+.empty-icon { font-size: 2.5rem; }
+.empty-state p { font-size: 0.875rem; }

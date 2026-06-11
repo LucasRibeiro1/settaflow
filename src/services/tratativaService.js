@@ -1,0 +1,138 @@
+import protheusApi from './protheusApi'
+import { mockTratativas } from '../mocks/tratativas'
+
+// Mude para false quando os endpoints Protheus (STWS021) estiverem disponíveis
+const USE_MOCK = true
+
+const BASE_URL = '/rest/STWS021'
+
+let mockData = [...mockTratativas]
+let nextId = mockData.length + 1
+
+// Converte data ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:MM...) para AAAAMMDD
+function toProtheusDate(isoStr) {
+  if (!isoStr) return ''
+  const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return match ? `${match[1]}${match[2]}${match[3]}` : ''
+}
+
+function uuid() {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+      })
+}
+
+// Monta o payload no formato da tabela ZTR010
+function toProtheusPayload(payload) {
+  const [codcli, loja = '01'] = String(payload.clienteId || '').split('-')
+  const dataHora = payload.dataHora ? new Date(payload.dataHora) : new Date()
+
+  return {
+    ZTR_FILIAL:  payload.filial          || '0201',
+    ZTR_ID:      payload.id              || uuid(),
+    ZTR_CODCLI:  codcli                  || '',
+    ZTR_LOJA:    loja,
+    ZTR_NOMCLI:  payload.clienteNome     || '',
+    ZTR_USUARIO: payload.usuario         || '',
+    ZTR_DATA:    toProtheusDate(dataHora.toISOString()),
+    ZTR_HORA:    dataHora.toTimeString().slice(0, 8),
+    ZTR_TPCONT:  payload.tipoContato     || '',
+    ZTR_STATUS:  payload.status          || '',
+    ZTR_OBS:     payload.observacao      || '',
+    ZTR_PROXAC:  payload.proximaAcao     || '',
+    ZTR_DTPROX:  toProtheusDate(payload.dataProximaAcao),
+    ZTR_ANEXOS:  payload.anexos?.length ? JSON.stringify(payload.anexos) : null,
+  }
+}
+
+// Mapeia registro ZTR010 → formato interno do app
+function fromProtheusRecord(raw) {
+  const d = String(raw.ZTR_DATA   || '')
+  const h = String(raw.ZTR_HORA   || '00:00:00')
+  const p = String(raw.ZTR_DTPROX || '')
+
+  return {
+    id:              raw.ZTR_ID,
+    clienteId:       `${String(raw.ZTR_CODCLI).trim()}-${String(raw.ZTR_LOJA).trim()}`,
+    clienteCodigo:   raw.ZTR_CODCLI,
+    clienteNome:     raw.ZTR_NOMCLI,
+    usuario:         raw.ZTR_USUARIO,
+    dataHora:        d.length === 8
+      ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${h}`
+      : null,
+    tipoContato:     raw.ZTR_TPCONT,
+    status:          raw.ZTR_STATUS,
+    observacao:      raw.ZTR_OBS,
+    proximaAcao:     raw.ZTR_PROXAC,
+    dataProximaAcao: p.length === 8
+      ? `${p.slice(0,4)}-${p.slice(4,6)}-${p.slice(6,8)}`
+      : '',
+    anexos: (() => {
+      try { return raw.ZTR_ANEXOS ? JSON.parse(raw.ZTR_ANEXOS) : [] }
+      catch { return [] }
+    })(),
+  }
+}
+
+export const tratativaService = {
+  async getTratativas(params = {}) {
+    if (USE_MOCK) {
+      let result = [...mockData]
+      if (params.clienteId) result = result.filter((t) => String(t.clienteId) === String(params.clienteId))
+      if (params.usuario)   result = result.filter((t) => t.usuario === params.usuario)
+      if (params.status)    result = result.filter((t) => t.status  === params.status)
+      result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
+      return result
+    }
+    const { data } = await protheusApi.get(`${BASE_URL}/listar`, { params })
+    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || [])
+    return lista.map(fromProtheusRecord)
+  },
+
+  async getTratativasCliente(clienteId) {
+    if (USE_MOCK) {
+      return mockData
+        .filter((t) => String(t.clienteId) === String(clienteId))
+        .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
+    }
+    const [codcli, loja = '01'] = String(clienteId).split('-')
+    const { data } = await protheusApi.get(`${BASE_URL}/listar`, { params: { codcli, loja } })
+    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || [])
+    return lista
+      .map(fromProtheusRecord)
+      .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
+  },
+
+  // POST → ZTR010
+  async createTratativa(payload) {
+    if (USE_MOCK) {
+      const nova = { id: nextId++, ...payload }
+      mockData = [nova, ...mockData]
+      return nova
+    }
+    const body = toProtheusPayload(payload)
+    const { data } = await protheusApi.post(`${BASE_URL}/gravar`, body)
+    return fromProtheusRecord(data)
+  },
+
+  async updateTratativa(id, payload) {
+    if (USE_MOCK) {
+      mockData = mockData.map((t) => (t.id === id || t.id === Number(id) ? { ...t, ...payload } : t))
+      return mockData.find((t) => t.id === id || t.id === Number(id))
+    }
+    const { data } = await protheusApi.put(`${BASE_URL}/atualizar`, { ZTR_ID: id, ...payload })
+    return fromProtheusRecord(data)
+  },
+
+  async deleteTratativa(id) {
+    if (USE_MOCK) {
+      mockData = mockData.filter((t) => t.id !== id && t.id !== Number(id))
+      return { success: true }
+    }
+    await protheusApi.delete(`${BASE_URL}/excluir`, { data: { ZTR_ID: id } })
+    return { success: true }
+  },
+}

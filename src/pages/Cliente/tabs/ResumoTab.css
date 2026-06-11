@@ -1,0 +1,131 @@
+.resumo-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .resumo-kpi-row { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .resumo-kpi-row { grid-template-columns: 1fr; }
+}
+
+.resumo-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.resumo-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+}
+.resumo-kpi-danger::before  { background: var(--danger); }
+.resumo-kpi-success::before { background: var(--success); }
+.resumo-kpi-info::before    { background: var(--primary); }
+.resumo-kpi-formula::before { background: var(--purple); }
+
+.resumo-kpi-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.resumo-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.resumo-kpi-danger .resumo-kpi-value  { color: var(--danger); }
+.resumo-kpi-success .resumo-kpi-value { color: var(--success); }
+
+.resumo-kpi-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Progress bar */
+.resumo-progress-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.resumo-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* Formula */
+.formula-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formula-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.formula-num { color: var(--success); font-weight: 600; }
+.formula-den { color: var(--danger); font-weight: 600; }
+.formula-div { color: var(--text-muted); }
+
+.formula-calc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.formula-calc strong {
+  color: var(--purple);
+  font-size: 0.875rem;
+}
+
+/* Observações */
+.obs-textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 0.825rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg);
+  resize: vertical;
+  outline: none;
+  transition: var(--transition);
+  line-height: 1.6;
+}
+
+.obs-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.obs-textarea::placeholder { color: var(--text-muted); }

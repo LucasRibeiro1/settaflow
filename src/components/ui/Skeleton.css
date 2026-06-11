@@ -1,0 +1,21 @@
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.5s ease infinite;
+  display: block;
+}
+
+.skeleton-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 20px;
+}
+
+.skeleton-table { display: flex; flex-direction: column; gap: 8px; padding: 16px; }
+.skeleton-row {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}

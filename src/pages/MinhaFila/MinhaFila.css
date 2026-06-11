@@ -1,0 +1,52 @@
+.fila-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fila-card {
+  overflow: hidden;
+}
+
+.fila-card-content {
+  display: flex;
+  gap: 0;
+}
+
+.fila-prioridade-bar {
+  width: 4px;
+  min-height: 100%;
+  border-radius: 4px;
+  margin: -20px 16px -20px -20px;
+  flex-shrink: 0;
+}
+.fila-bar-critica { background: var(--danger); }
+.fila-bar-alta    { background: var(--warning); }
+.fila-bar-media   { background: var(--info); }
+.fila-bar-baixa   { background: var(--success); }
+
+.fila-info { flex: 1; }
+
+.fila-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.fila-codigo { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
+.fila-nome { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 2px 0 4px; }
+.fila-motivo { font-size: 0.775rem; color: var(--text-secondary); }
+
+.fila-details {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 14px;
+}
+.fila-detail { display: flex; flex-direction: column; gap: 2px; }
+.fila-detail-label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.fila-detail-value { font-size: 0.825rem; font-weight: 600; color: var(--text-primary); }
+.fila-valor { color: var(--danger) !important; }
+
+.fila-actions { display: flex; gap: 8px; }

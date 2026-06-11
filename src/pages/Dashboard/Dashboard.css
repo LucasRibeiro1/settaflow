@@ -1,0 +1,175 @@
+.summary-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.summary-card-link { cursor: pointer; }
+.summary-card-link:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.summary-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.summary-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.summary-icon { font-size: 1.25rem; }
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.summary-sub { font-size: 0.7rem; color: var(--text-muted); }
+
+.summary-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  border-radius: 2px 0 0 2px;
+}
+.summary-card-danger::after  { background: var(--danger); }
+.summary-card-warning::after { background: var(--warning); }
+.summary-card-info::after    { background: var(--info); }
+.summary-card-purple::after  { background: var(--purple); }
+.summary-card-success::after { background: var(--success); }
+
+/* Global gauge */
+.global-gauge {
+  padding: 0 16px 16px;
+}
+
+.gauge-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.gauge-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gauge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gauge-legend-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.gauge-legend-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.gauge-totals {
+  display: flex;
+  gap: 0;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.gauge-total-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px;
+  border-right: 1px solid var(--border);
+}
+
+.gauge-total-item:first-child { padding-left: 0; }
+.gauge-total-item:last-child { border-right: none; }
+
+.gauge-total-item span {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gauge-total-item strong {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Devedores table */
+.devedores-table { overflow: hidden; }
+.devedores-table table { width: 100%; border-collapse: collapse; }
+.devedores-table th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.devedores-table td {
+  padding: 14px 20px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+}
+.devedores-table tr:last-child td { border-bottom: none; }
+.row-clickable { cursor: pointer; transition: var(--transition); }
+.row-clickable:hover td { background: var(--bg); }
+
+.rank-badge {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.rank-1 { background: #fef3c7; color: #92400e; }
+.rank-2 { background: var(--border); color: var(--text-secondary); }
+.rank-3 { background: #fef3c7; color: #78350f; }
+.rank-4, .rank-5 { background: var(--border); color: var(--text-muted); }
+
+.devedor-nome { font-weight: 600; color: var(--text-primary) !important; }
+.devedor-valor { font-weight: 700; color: var(--danger) !important; }
+
+.table-action-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 4px 0;
+  font-family: inherit;
+}
+.table-action-btn:hover { text-decoration: underline; }
