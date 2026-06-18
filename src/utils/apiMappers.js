@@ -112,8 +112,10 @@ export function mapTitulo(raw, clienteMap) {
 
   const vencimentoOriginal = parseProtheusDate(raw.VENCIMENTO ?? raw.DTVENCTO  ?? raw.dtvencto)
   const vencimentoReal     = parseProtheusDate(raw.REPROGRAMADO ?? raw.DTVENCREA ?? raw.dtvencrea)
-  // REPROGRAMADO é a data definitiva; VENCIMENTO é só informativo
-  // Se REPROGRAMADO vazio → diasAtraso = 0 (não vencido), igual ao comportamento da query SQL
+
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+  // Vencido = REPROGRAMADO preenchido E REPROGRAMADO <= hoje (equivalente a E1_VENCREA <= CURDATE())
+  const isVencido = vencimentoReal !== null && vencimentoReal <= hoje
   const diasAtraso = calcDiasAtraso(vencimentoReal)
 
   const emissao = parseProtheusDate(raw.EMISSAO  ?? raw.DTEMISSAO ?? raw.dtemissao)
@@ -140,6 +142,7 @@ export function mapTitulo(raw, clienteMap) {
     vencimento: vencimentoReal || vencimentoOriginal,
     dtBaixa,
     diasAtraso,
+    isVencido,
     valorOriginal: parseFloat(raw.VALOR ?? 0) || 0,
     saldoAtual:   parseFloat(raw.SALDO ?? 0) || 0,
     vendedor: String(raw.GRUPO_VEN ?? raw.VENDEDOR ?? raw.vendedor ?? '').trim(),
@@ -170,7 +173,7 @@ export function enrichClientesWithTitulos(clientes, titulos) {
     } else if (t.saldoAtual > 0) {
       // API já retorna SALDO negativo para tipos IS-/IN- (impostos), soma direta
       c.valorTotalAberto += t.saldoAtual
-      if (t.diasAtraso > 0) {
+      if (t.isVencido) {
         c.qtdTitulosVencidos += 1
         if (t.diasAtraso > c.maiorAtraso) c.maiorAtraso = t.diasAtraso
       }
@@ -199,7 +202,7 @@ const STATUS_CONFIG = {
 
 export function computeDashboard(clientes, titulos) {
   const titulosAbertos = titulos.filter((t) => !t.dtBaixa && t.saldoAtual > 0)
-  const titulosVencidos = titulosAbertos.filter((t) => t.diasAtraso > 0)
+  const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
 
   const clientesComAtraso = clientes.filter((c) => c.qtdTitulosVencidos > 0)
   const limiteCreditoTotal = clientes.reduce((s, c) => s + c.limiteCredito, 0)
