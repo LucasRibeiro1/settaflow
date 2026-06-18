@@ -29,12 +29,13 @@ async function fetchRaw() {
       .then(({ data }) => {
         const all = extractArray(data)
         // Remove duplicatas geradas pelo UNION ALL do ADVPL
-        // Chave: empresa + titulo + cliente + vencimento + reprogramado + saldo
+        // Chave: empresa + titulo + parcela + cliente + vencimento + reprogramado + saldo
         const seen = new Set()
         _cache = all.filter((r) => {
           const key = [
             r.EMPRESA ?? r.FILIAL ?? '',
             r.TITULO  ?? r.NUMERO ?? '',
+            r.PARCELA ?? '',
             r.COD_CLI ?? r.CODCLI ?? '',
             r.VENCIMENTO  ?? r.DTVENCTO  ?? '',
             r.REPROGRAMADO ?? r.DTVENCREA ?? '',
