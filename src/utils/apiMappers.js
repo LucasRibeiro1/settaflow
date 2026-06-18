@@ -245,15 +245,17 @@ export function computeDashboard(clientes, titulos) {
     cor: STATUS_CONFIG[key]?.cor || '#94a3b8',
   }))
 
-  const maioresDevedores = [...clientesComAtraso]
+  const devedoresOrdenados = [...clientesComAtraso]
     .sort((a, b) => b.valorTotalAberto - a.valorTotalAberto)
-    .slice(0, 10)
     .map((c) => ({
       id: c.id,
       nome: c.nomeFantasia || c.razaoSocial,
       valor: c.valorTotalAberto,
       diasAtraso: c.maiorAtraso,
     }))
+
+  const maioresDevedores = devedoresOrdenados.slice(0, 10)
+  const todosDevedores   = devedoresOrdenados
 
   // API já retorna SALDO negativo para tipos IS-/IN-, soma direta
   const saldoTotalAberto  = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
@@ -265,7 +267,7 @@ export function computeDashboard(clientes, titulos) {
     { name: 'Total em Dia',     value: Math.max(0, saldoTotalAberto - saldoTotalVencido),    fill: '#2563eb' },
   ]
 
-  // Histórico acumulado de vencidos por mês (REPROGRAMADO)
+  // Histórico acumulado de vencidos por mês (REPROGRAMADO) — preenche todos os meses
   const mesMap = {}
   for (const t of titulosVencidos) {
     if (!t.vencimentoReal) continue
@@ -274,12 +276,32 @@ export function computeDashboard(clientes, titulos) {
     const key = `${y}-${String(m).padStart(2, '0')}`
     mesMap[key] = (mesMap[key] || 0) + Math.abs(t.saldoAtual)
   }
-  const evolucaoMensal = Object.entries(mesMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, saldoVencido]) => ({
-      mes: `${String(parseInt(key.slice(5), 10)).padStart(2, '0')}/${key.slice(2, 4)}`,
-      saldoVencido,
-    }))
+  // Preenche meses sem dados entre o primeiro e o mês atual
+  const mesKeysExistentes = Object.keys(mesMap).sort()
+  if (mesKeysExistentes.length > 0) {
+    const hojeRef = new Date()
+    const [iy, im] = mesKeysExistentes[0].split('-').map(Number)
+    let cy = iy, cm = im
+    const endY = hojeRef.getFullYear()
+    const endM = hojeRef.getMonth() + 1
+    while (cy < endY || (cy === endY && cm <= endM)) {
+      const key = `${cy}-${String(cm).padStart(2, '0')}`
+      if (!(key in mesMap)) mesMap[key] = 0
+      cm++
+      if (cm > 12) { cm = 1; cy++ }
+    }
+  }
+  // Acumulado crescente (running total)
+  let acumuladoMes = 0
+  const evolucaoMensal = Object.keys(mesMap)
+    .sort()
+    .map((key) => {
+      acumuladoMes += mesMap[key]
+      return {
+        mes: `${String(parseInt(key.slice(5), 10)).padStart(2, '0')}/${key.slice(2, 4)}`,
+        saldoVencido: acumuladoMes,
+      }
+    })
 
   const percInadimplencia = saldoTotalAberto > 0
     ? parseFloat(((saldoTotalVencido / saldoTotalAberto) * 100).toFixed(1))
@@ -319,5 +341,6 @@ export function computeDashboard(clientes, titulos) {
     clientesPorStatus,
     evolucaoMensal,
     maioresDevedores,
+    todosDevedores,
   }
 }

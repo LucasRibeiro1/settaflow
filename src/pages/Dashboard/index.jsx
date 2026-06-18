@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import {
@@ -103,11 +104,14 @@ function CustomTooltipCurrency({ active, payload, label }) {
   )
 }
 
+const RANK_PAGE_SIZE = 10
+
 export default function Dashboard() {
   const { data, loading } = useApi(() => dashboardService.getDashboard())
   const navigate = useNavigate()
   const { theme } = useApp()
   const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0'
+  const [rankPage, setRankPage] = useState(1)
 
   if (loading || !data) {
     return (
@@ -124,8 +128,15 @@ export default function Dashboard() {
 
   const {
     resumo, composicaoCarteira, percInadimplencia,
-    clientesPorFaixaAtraso, clientesPorStatus, evolucaoMensal, maioresDevedores,
+    clientesPorFaixaAtraso, clientesPorStatus, evolucaoMensal, maioresDevedores, todosDevedores,
   } = data
+
+  const rankTotal = todosDevedores?.length ?? 0
+  const rankTotalPages = Math.ceil(rankTotal / RANK_PAGE_SIZE)
+  const rankData = (todosDevedores ?? []).slice(
+    (rankPage - 1) * RANK_PAGE_SIZE,
+    rankPage * RANK_PAGE_SIZE,
+  )
 
   const summaryCards = [
     {
@@ -282,28 +293,23 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Top 10 — gráfico de barras largura total */}
+        {/* Top 10 — barras horizontais largura total */}
         <Card padding={false} style={{ marginBottom: 24 }}>
           <CardHeader
             title="Top 10 Maiores Devedores"
             subtitle="Saldo em aberto por cliente — clique na barra para ver detalhes"
           />
           <div style={{ padding: '0 24px 20px' }}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={340}>
               <BarChart
-                data={maioresDevedores.map((d) => ({ ...d, nomeAbrev: truncate(d.nome) }))}
-                barSize={36}
-                margin={{ top: 4, right: 16, left: 8, bottom: 64 }}
+                layout="vertical"
+                data={maioresDevedores.map((d) => ({ ...d, nomeAbrev: truncate(d.nome, 28) }))}
+                barSize={22}
+                margin={{ top: 4, right: 80, left: 4, bottom: 4 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                <XAxis
-                  dataKey="nomeAbrev"
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
-                  angle={-35}
-                  textAnchor="end"
-                  interval={0}
-                />
-                <YAxis tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
+                <XAxis type="number" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis type="category" dataKey="nomeAbrev" width={200} tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null
@@ -320,7 +326,7 @@ export default function Dashboard() {
                 <Bar
                   dataKey="valor"
                   name="Saldo em Aberto"
-                  radius={[6, 6, 0, 0]}
+                  radius={[0, 6, 6, 0]}
                   onClick={(d) => navigate(`/carteira/${d.id}`)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -336,9 +342,12 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Ranking tabela Top 10 */}
+        {/* Ranking tabela — todos os devedores, 10 por página */}
         <Card padding={false}>
-          <CardHeader title="Ranking dos Maiores Devedores" subtitle="Top 10 por valor em aberto" />
+          <CardHeader
+            title="Ranking de Devedores"
+            subtitle={`${rankTotal} clientes com títulos vencidos em aberto · página ${rankPage} de ${rankTotalPages}`}
+          />
           <div className="devedores-table">
             <table>
               <thead>
@@ -351,26 +360,50 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {maioresDevedores.map((d, i) => (
-                  <tr key={d.id} onClick={() => navigate(`/carteira/${d.id}`)} className="row-clickable">
-                    <td>
-                      <span className={`rank-badge rank-${Math.min(i + 1, 3)}`}>{i + 1}º</span>
-                    </td>
-                    <td className="devedor-nome">{d.nome}</td>
-                    <td>
-                      <Badge type={d.diasAtraso > 120 ? 'danger' : d.diasAtraso > 60 ? 'warning' : 'info'}>
-                        {d.diasAtraso} dias
-                      </Badge>
-                    </td>
-                    <td className="devedor-valor">{formatCurrency(d.valor)}</td>
-                    <td>
-                      <button className="table-action-btn">Ver detalhes →</button>
-                    </td>
-                  </tr>
-                ))}
+                {rankData.map((d, i) => {
+                  const pos = (rankPage - 1) * RANK_PAGE_SIZE + i + 1
+                  return (
+                    <tr key={d.id} onClick={() => navigate(`/carteira/${d.id}`)} className="row-clickable">
+                      <td>
+                        <span className={`rank-badge rank-${Math.min(pos, 3)}`}>{pos}º</span>
+                      </td>
+                      <td className="devedor-nome">{d.nome}</td>
+                      <td>
+                        <Badge type={d.diasAtraso > 120 ? 'danger' : d.diasAtraso > 60 ? 'warning' : 'info'}>
+                          {d.diasAtraso} dias
+                        </Badge>
+                      </td>
+                      <td className="devedor-valor">{formatCurrency(d.valor)}</td>
+                      <td>
+                        <button className="table-action-btn">Ver detalhes →</button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
+          {rankTotalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+              <button
+                className="table-action-btn"
+                onClick={() => setRankPage((p) => Math.max(1, p - 1))}
+                disabled={rankPage === 1}
+              >
+                ← Anterior
+              </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                {rankPage} / {rankTotalPages}
+              </span>
+              <button
+                className="table-action-btn"
+                onClick={() => setRankPage((p) => Math.min(rankTotalPages, p + 1))}
+                disabled={rankPage === rankTotalPages}
+              >
+                Próximo →
+              </button>
+            </div>
+          )}
         </Card>
 
       </div>
