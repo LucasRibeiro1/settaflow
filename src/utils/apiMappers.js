@@ -180,8 +180,8 @@ export function enrichClientesWithTitulos(clientes, titulos) {
       if (!c.ultimoPagamento || t.dtBaixa > c.ultimoPagamento) {
         c.ultimoPagamento = t.dtBaixa
       }
-    } else if (t.saldoAtual > 0) {
-      // Inclui parcialmente pagos (E1_SALDO > 0), igual ao filtro da SQL
+    } else if (t.saldoAtual !== 0) {
+      // SQL garante E1_SALDO > 0; IS-/IN- retornam negativo e reduzem o total corretamente
       c.valorTotalAberto += t.saldoAtual
       if (t.isVencido) {
         c.qtdTitulosVencidos += 1
@@ -211,8 +211,8 @@ const STATUS_CONFIG = {
 }
 
 export function computeDashboard(clientes, titulos) {
-  // Replica E1_SALDO > 0 da SQL (não filtra E1_BAIXA — inclui parcialmente pagos)
-  const titulosAbertos  = titulos.filter((t) => t.saldoAtual > 0 && isTituloValido(t))
+  // SQL já garante E1_SALDO > 0 no WHERE; IS-/IN- retornam saldo negativo da API
+  const titulosAbertos  = titulos.filter((t) => isTituloValido(t))
   const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
 
   const clientesComAtraso = clientes.filter((c) => c.qtdTitulosVencidos > 0)
