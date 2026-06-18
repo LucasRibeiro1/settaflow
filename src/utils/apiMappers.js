@@ -247,7 +247,7 @@ export function computeDashboard(clientes, titulos) {
 
   const maioresDevedores = [...clientesComAtraso]
     .sort((a, b) => b.valorTotalAberto - a.valorTotalAberto)
-    .slice(0, 5)
+    .slice(0, 10)
     .map((c) => ({
       id: c.id,
       nome: c.nomeFantasia || c.razaoSocial,
@@ -258,6 +258,32 @@ export function computeDashboard(clientes, titulos) {
   // API já retorna SALDO negativo para tipos IS-/IN-, soma direta
   const saldoTotalAberto  = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
   const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
+
+  // Composição da carteira: vencido vs em dia
+  const composicaoCarteira = [
+    { name: 'Total Vencido',    value: Math.abs(saldoTotalVencido),                          fill: '#ef4444' },
+    { name: 'Total em Dia',     value: Math.max(0, saldoTotalAberto - saldoTotalVencido),    fill: '#2563eb' },
+  ]
+
+  // Histórico acumulado de vencidos por mês (REPROGRAMADO)
+  const mesMap = {}
+  for (const t of titulosVencidos) {
+    if (!t.vencimentoReal) continue
+    const y = t.vencimentoReal.getFullYear()
+    const m = t.vencimentoReal.getMonth() + 1
+    const key = `${y}-${String(m).padStart(2, '0')}`
+    mesMap[key] = (mesMap[key] || 0) + Math.abs(t.saldoAtual)
+  }
+  const evolucaoMensal = Object.entries(mesMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, saldoVencido]) => ({
+      mes: `${String(parseInt(key.slice(5), 10)).padStart(2, '0')}/${key.slice(2, 4)}`,
+      saldoVencido,
+    }))
+
+  const percInadimplencia = saldoTotalAberto > 0
+    ? parseFloat(((saldoTotalVencido / saldoTotalAberto) * 100).toFixed(1))
+    : 0
 
   return {
     resumo: {
@@ -287,9 +313,11 @@ export function computeDashboard(clientes, titulos) {
       recuperadoMes: 0,
       percentualMeta: 0,
     },
+    composicaoCarteira,
+    percInadimplencia,
     clientesPorFaixaAtraso: Object.values(faixaBuckets),
     clientesPorStatus,
-    evolucaoMensal: [],
+    evolucaoMensal,
     maioresDevedores,
   }
 }
