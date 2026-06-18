@@ -175,12 +175,13 @@ export function enrichClientesWithTitulos(clientes, titulos) {
     const c = map.get(t.clienteId)
     if (!c || !isTituloValido(t)) continue
 
-    if (t.dtBaixa) {
+    if (t.dtBaixa && t.saldoAtual <= 0) {
+      // Título totalmente pago: registra último pagamento
       if (!c.ultimoPagamento || t.dtBaixa > c.ultimoPagamento) {
         c.ultimoPagamento = t.dtBaixa
       }
     } else if (t.saldoAtual > 0) {
-      // API já retorna SALDO negativo para tipos IS-/IN- (impostos), soma direta
+      // Inclui parcialmente pagos (E1_SALDO > 0), igual ao filtro da SQL
       c.valorTotalAberto += t.saldoAtual
       if (t.isVencido) {
         c.qtdTitulosVencidos += 1
@@ -210,7 +211,8 @@ const STATUS_CONFIG = {
 }
 
 export function computeDashboard(clientes, titulos) {
-  const titulosAbertos = titulos.filter((t) => !t.dtBaixa && t.saldoAtual > 0 && isTituloValido(t))
+  // Replica E1_SALDO > 0 da SQL (não filtra E1_BAIXA — inclui parcialmente pagos)
+  const titulosAbertos  = titulos.filter((t) => t.saldoAtual > 0 && isTituloValido(t))
   const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
 
   const clientesComAtraso = clientes.filter((c) => c.qtdTitulosVencidos > 0)
