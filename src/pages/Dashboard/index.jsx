@@ -115,7 +115,7 @@ export default function Dashboard() {
       <>
         <Header title="Dashboard" subtitle="Visão executiva da carteira de inadimplência" />
         <div className="page-content">
-          <div className="grid grid-6" style={{ marginBottom: 24 }}>
+          <div className="grid grid-4" style={{ marginBottom: 24 }}>
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         </div>
@@ -135,11 +135,19 @@ export default function Dashboard() {
       onClick: () => navigate('/carteira'),
     },
     {
-      label: 'Valor Total em Aberto',
-      value: formatCurrency(resumo.valorTotalAberto),
-      sub: 'Saldo devedor',
+      label: 'Total a Receber',
+      value: formatCurrency(resumo.saldoTotalAberto),
+      sub: 'Saldo total em aberto',
       icon: '💰',
       color: 'warning',
+    },
+    {
+      label: 'Total Vencido',
+      value: formatCurrency(resumo.saldoTotalVencido),
+      sub: 'Saldo total vencido',
+      icon: '⏰',
+      color: 'danger',
+      onClick: () => navigate('/titulos'),
     },
     {
       label: 'Títulos Vencidos',
@@ -147,29 +155,6 @@ export default function Dashboard() {
       sub: 'Total de documentos',
       icon: '📄',
       color: 'info',
-    },
-    {
-      label: 'Sem Contato +30d',
-      value: resumo.clientesSemContatoMais30Dias,
-      sub: 'Precisam de ação',
-      icon: '⚠️',
-      color: 'danger',
-      onClick: () => navigate('/minha-fila'),
-    },
-    {
-      label: 'Promessas Pendentes',
-      value: resumo.promessasPendentes,
-      sub: 'A confirmar',
-      icon: '🤝',
-      color: 'purple',
-      onClick: () => navigate('/acordos'),
-    },
-    {
-      label: 'Previsão de Recebimento',
-      value: formatCurrency(resumo.valorPrevistoRecebimento),
-      sub: 'Este mês',
-      icon: '📈',
-      color: 'success',
     },
   ]
 
@@ -185,7 +170,7 @@ export default function Dashboard() {
       <div className="page-content fade-in">
 
         {/* Summary Cards */}
-        <div className="grid grid-6" style={{ marginBottom: 24 }}>
+        <div className="grid grid-4" style={{ marginBottom: 24 }}>
           {summaryCards.map((card, i) => (
             <div
               key={i}

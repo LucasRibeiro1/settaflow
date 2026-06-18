@@ -1,7 +1,9 @@
 export const mockDashboard = {
   resumo: {
     totalClientesInadimplentes: 8,
-    valorTotalAberto: 1003621.00,
+    valorTotalAberto: 1316071.00,
+    saldoTotalAberto: 1316071.00,
+    saldoTotalVencido: 1003621.00,
     totalTitulosVencidos: 50,
     clientesSemContatoMais30Dias: 3,
     promessasPendentes: 2,

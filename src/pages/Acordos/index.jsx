@@ -33,6 +33,11 @@ export default function Acordos() {
 
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
+  const promessasPendentes = (acordos || []).filter((a) => a.status === 'em_aberto').length
+  const previsaoRecebimento = (acordos || [])
+    .filter((a) => a.status === 'em_aberto')
+    .reduce((s, a) => s + (a.valorNegociado || 0), 0)
+
   const handleUpdateStatus = async (id, status) => {
     try {
       await acordoService.updateAcordo(id, { status })
@@ -51,6 +56,32 @@ export default function Acordos() {
         breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Acordos' }]} />}
       />
       <div className="page-content fade-in">
+
+        <div className="grid grid-2" style={{ marginBottom: 16 }}>
+          {[
+            { label: 'Promessas Pendentes', value: promessasPendentes, sub: 'Acordos em aberto', icon: '🤝', color: '#8b5cf6' },
+            { label: 'Previsão de Recebimento', value: formatCurrency(previsaoRecebimento), sub: 'Total a receber', icon: '📈', color: '#10b981' },
+          ].map((card) => (
+            <div key={card.label} style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '16px 20px',
+              borderLeft: `3px solid ${card.color}`,
+              boxShadow: 'var(--shadow-sm)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: '1.1rem' }}>{card.icon}</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {card.label}
+                </span>
+              </div>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>{card.value}</span>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>{card.sub}</p>
+            </div>
+          ))}
+        </div>
+
         <Card className="mb-16">
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
             <Select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); goToPage(1) }} style={{ width: 220 }}>

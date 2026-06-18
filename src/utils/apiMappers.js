@@ -102,46 +102,57 @@ export function mapCliente(raw) {
 }
 
 export function mapTitulo(raw, clienteMap) {
-  const codcli = String(raw.CODCLI ?? raw.codcli ?? '').trim()
-  const loja = String(raw.LOJA ?? raw.loja ?? '01').trim()
-  const filial = String(raw.FILIAL ?? raw.filial ?? '').trim()
+  // COD_CLI = CODCLI + LOJA concatenados (ex: "00194701" = "001947" + "01")
+  const codCliRaw = String(raw.COD_CLI ?? raw.CODCLI ?? raw.codcli ?? '').trim()
+  const loja    = codCliRaw.length >= 2 ? codCliRaw.slice(-2) : '01'
+  const codcli  = codCliRaw.length >= 2 ? codCliRaw.slice(0, -2) : codCliRaw
+  const empresa = String(raw.EMPRESA ?? raw.FILIAL ?? raw.filial ?? '').trim()
   const clienteKey = `${codcli}-${loja}`
   const cliente = clienteMap?.[clienteKey]
 
-  const vencimentoOriginal = parseProtheusDate(raw.DTVENCTO ?? raw.dtvencto)
-  const vencimentoReal     = parseProtheusDate(raw.DTVENCREA ?? raw.dtvencrea)
-  // Usa DTVENCREA quando disponível, senão DTVENCTO
-  const vencEfetivo = vencimentoReal || vencimentoOriginal
+  const vencimentoOriginal = parseProtheusDate(raw.VENCIMENTO ?? raw.DTVENCTO  ?? raw.dtvencto)
+  const vencimentoReal     = parseProtheusDate(raw.REPROGRAMADO ?? raw.DTVENCREA ?? raw.dtvencrea)
+  // REPROGRAMADO é a data definitiva; VENCIMENTO é só informativo
+  // Se REPROGRAMADO vazio → diasAtraso = 0 (não vencido), igual ao comportamento da query SQL
+  const diasAtraso = calcDiasAtraso(vencimentoReal)
 
-  const emissao = parseProtheusDate(raw.DTEMISSAO ?? raw.dtemissao)
-  const dtBaixa = parseProtheusDate(raw.DTBAIXA ?? raw.dtbaixa)
-  const diasAtraso = calcDiasAtraso(vencEfetivo)
+  const emissao = parseProtheusDate(raw.EMISSAO  ?? raw.DTEMISSAO ?? raw.dtemissao)
+  const dtBaixa = parseProtheusDate(raw.BAIXA    ?? raw.DTBAIXA   ?? raw.dtbaixa)
 
+  const numero  = String(raw.TITULO  ?? raw.NUMERO  ?? raw.numero  ?? '').trim()
   const prefixo = String(raw.PREFIXO ?? raw.prefixo ?? '').trim()
-  const numero = String(raw.NUMERO ?? raw.numero ?? '').trim()
   const parcela = String(raw.PARCELA ?? raw.parcela ?? '').trim()
 
   return {
-    id: `${filial}-${prefixo}-${numero}-${parcela}-${codcli}-${loja}`,
-    filial,
+    id: `${empresa}-${numero}-${codcli}-${loja}-${raw.VENCIMENTO ?? raw.DTVENCTO ?? ''}`,
+    filial: empresa,
     clienteId: clienteKey,
     clienteCodigo: codcli,
-    clienteNome: cliente?.razaoSocial || codcli,
-    grupoCliente: cliente?.grupoCliente || '—',
+    clienteNome: String(raw.CLIENTE ?? cliente?.razaoSocial ?? codcli).trim(),
+    grupoCliente: cliente?.grupoCliente || raw.GRUPO_VEN || '—',
     prefixo,
     titulo: numero,
     parcela,
-    tipo: String(raw.ESPECIE ?? raw.especie ?? raw.TIPO ?? raw.tipo ?? '').trim() || '—',
+    tipo: String(raw.TIPO ?? raw.ESPECIE ?? raw.especie ?? '').trim() || '—',
     emissao,
     vencimentoOriginal,
     vencimentoReal,
-    vencimento: vencEfetivo,
+    vencimento: vencimentoReal || vencimentoOriginal,
     dtBaixa,
     diasAtraso,
-    valorOriginal: parseFloat(raw.VALOR ?? raw.valor ?? 0) || 0,
-    saldoAtual: parseFloat(raw.SALDO ?? raw.saldo ?? 0) || 0,
-    vendedor: String(raw.VENDEDOR ?? raw.vendedor ?? '').trim(),
+    valorOriginal: parseFloat(raw.VALOR ?? 0) || 0,
+    saldoAtual:   parseFloat(raw.SALDO ?? 0) || 0,
+    vendedor: String(raw.GRUPO_VEN ?? raw.VENDEDOR ?? raw.vendedor ?? '').trim(),
+    historico:    String(raw.HISTORICO    ?? '').trim(),
+    natureza:     String(raw.NATUREZA     ?? '').trim(),
+    inadimplencia: String(raw.INADIMPLENCIA ?? '').trim(),
+    motivo:       String(raw.MOTIVO       ?? '').trim(),
+    pedido:       String(raw.PEDIDO       ?? '').trim(),
   }
+}
+
+function isImposto(tipo) {
+  return /^(IN|IS)/i.test(String(tipo ?? ''))
 }
 
 export function enrichClientesWithTitulos(clientes, titulos) {
@@ -162,8 +173,8 @@ export function enrichClientesWithTitulos(clientes, titulos) {
         c.ultimoPagamento = t.dtBaixa
       }
     } else if (t.saldoAtual > 0) {
-      // Título em aberto
-      c.valorTotalAberto += t.saldoAtual
+      const fator = isImposto(t.tipo) ? -1 : 1
+      c.valorTotalAberto += fator * t.saldoAtual
       if (t.diasAtraso > 0) {
         c.qtdTitulosVencidos += 1
         if (t.diasAtraso > c.maiorAtraso) c.maiorAtraso = t.diasAtraso
@@ -235,10 +246,15 @@ export function computeDashboard(clientes, titulos) {
       diasAtraso: c.maiorAtraso,
     }))
 
+  const saldoTotalAberto  = titulosAbertos.reduce((s, t) => s + (isImposto(t.tipo) ? -1 : 1) * t.saldoAtual, 0)
+  const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + (isImposto(t.tipo) ? -1 : 1) * t.saldoAtual, 0)
+
   return {
     resumo: {
       totalClientesInadimplentes: clientesComAtraso.length,
       valorTotalAberto,
+      saldoTotalAberto,
+      saldoTotalVencido,
       totalTitulosVencidos: titulosVencidos.length,
       clientesSemContatoMais30Dias: clientesComAtraso.filter((c) => c.maiorAtraso > 30).length,
       promessasPendentes: 0,
