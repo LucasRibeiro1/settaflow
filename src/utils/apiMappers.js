@@ -151,10 +151,6 @@ export function mapTitulo(raw, clienteMap) {
   }
 }
 
-function isImposto(tipo) {
-  return /^(IN|IS)/i.test(String(tipo ?? ''))
-}
-
 export function enrichClientesWithTitulos(clientes, titulos) {
   const map = new Map(
     clientes.map((c) => [
@@ -168,13 +164,12 @@ export function enrichClientesWithTitulos(clientes, titulos) {
     if (!c) continue
 
     if (t.dtBaixa) {
-      // Título baixado (pago)
       if (!c.ultimoPagamento || t.dtBaixa > c.ultimoPagamento) {
         c.ultimoPagamento = t.dtBaixa
       }
     } else if (t.saldoAtual > 0) {
-      const fator = isImposto(t.tipo) ? -1 : 1
-      c.valorTotalAberto += fator * t.saldoAtual
+      // API já retorna SALDO negativo para tipos IS-/IN- (impostos), soma direta
+      c.valorTotalAberto += t.saldoAtual
       if (t.diasAtraso > 0) {
         c.qtdTitulosVencidos += 1
         if (t.diasAtraso > c.maiorAtraso) c.maiorAtraso = t.diasAtraso
@@ -246,8 +241,9 @@ export function computeDashboard(clientes, titulos) {
       diasAtraso: c.maiorAtraso,
     }))
 
-  const saldoTotalAberto  = titulosAbertos.reduce((s, t) => s + (isImposto(t.tipo) ? -1 : 1) * t.saldoAtual, 0)
-  const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + (isImposto(t.tipo) ? -1 : 1) * t.saldoAtual, 0)
+  // API já retorna SALDO negativo para tipos IS-/IN-, soma direta
+  const saldoTotalAberto  = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
 
   return {
     resumo: {
