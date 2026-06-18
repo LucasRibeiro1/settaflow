@@ -154,6 +154,15 @@ export function mapTitulo(raw, clienteMap) {
   }
 }
 
+// Replica filtros da query SQL: E1_TIPO NOT IN('RA','NCC') e E1_EMISSAO >= '20170101'
+const TIPOS_EXCLUIDOS = new Set(['RA', 'NCC'])
+const EMISSAO_MIN = new Date(2017, 0, 1)
+function isTituloValido(t) {
+  if (TIPOS_EXCLUIDOS.has((t.tipo ?? '').trim().toUpperCase())) return false
+  if (t.emissao && t.emissao < EMISSAO_MIN) return false
+  return true
+}
+
 export function enrichClientesWithTitulos(clientes, titulos) {
   const map = new Map(
     clientes.map((c) => [
@@ -164,7 +173,7 @@ export function enrichClientesWithTitulos(clientes, titulos) {
 
   for (const t of titulos) {
     const c = map.get(t.clienteId)
-    if (!c) continue
+    if (!c || !isTituloValido(t)) continue
 
     if (t.dtBaixa) {
       if (!c.ultimoPagamento || t.dtBaixa > c.ultimoPagamento) {
@@ -201,7 +210,7 @@ const STATUS_CONFIG = {
 }
 
 export function computeDashboard(clientes, titulos) {
-  const titulosAbertos = titulos.filter((t) => !t.dtBaixa && t.saldoAtual > 0)
+  const titulosAbertos = titulos.filter((t) => !t.dtBaixa && t.saldoAtual > 0 && isTituloValido(t))
   const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
 
   const clientesComAtraso = clientes.filter((c) => c.qtdTitulosVencidos > 0)
