@@ -72,8 +72,8 @@ export default function ConsultaTitulos() {
     }
     if (filterGrupo) result = result.filter((t) => t.grupoCliente === filterGrupo)
     if (filterTipo) result = result.filter((t) => t.tipo === filterTipo)
-    if (filterAtraso === 'vencido') result = result.filter((t) => t.diasAtraso > 0)
-    if (filterAtraso === 'no_prazo') result = result.filter((t) => t.diasAtraso === 0)
+    if (filterAtraso === 'vencido') result = result.filter((t) => t.isVencido)
+    if (filterAtraso === 'no_prazo') result = result.filter((t) => !t.isVencido)
     if (filterFaixa) {
       const faixas = {
         '1-30':   (t) => t.diasAtraso >= 1 && t.diasAtraso <= 30,
@@ -99,7 +99,7 @@ export default function ConsultaTitulos() {
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
   const totalSaldo = filtered.reduce((s, t) => s + t.saldoAtual, 0)
-  const totalVencidos = filtered.filter((t) => t.diasAtraso > 0).length
+  const totalVencidos = filtered.filter((t) => t.isVencido).length
 
   const handleSort = (field) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -116,17 +116,37 @@ export default function ConsultaTitulos() {
   const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipo(''); setFilterFaixa(''); setFilterAtraso('') }
 
   function handleExportCSV() {
-    const headers = ['Título', 'Cliente', 'Código', 'Tipo', 'Vencimento', 'Dias Atraso', 'Saldo (R$)']
+    const headers = [
+      'EMPRESA', 'CARTEIRA', 'TITULO', 'COD_CLIENTE', 'CLIENTE',
+      'VENCIMENTO', 'REPROGRAMADO', 'VALOR', 'EMISSAO', 'TIPO',
+      'NATUREZA', 'BAIXA', 'SALDO', 'DIAS_ATRASO', 'VENCIDO', 'GRUPO_VEN',
+    ]
+    const fmt = (d) => {
+      if (!d) return ''
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      return `${y}${m}${dd}`
+    }
     const rows = filtered.map((t) => [
+      t.filial,
+      'RECEBER',
       t.titulo,
+      t.clienteId,
       t.clienteNome,
-      t.clienteCodigo,
+      fmt(t.vencimentoOriginal),
+      fmt(t.vencimentoReal),
+      t.valorOriginal.toFixed(2).replace('.', ','),
+      fmt(t.emissao),
       t.tipo,
-      formatDate(t.dataVencimento),
-      t.diasAtraso,
+      t.natureza,
+      fmt(t.dtBaixa),
       t.saldoAtual.toFixed(2).replace('.', ','),
+      t.diasAtraso,
+      t.isVencido ? 'S' : 'N',
+      t.vendedor,
     ])
-    exportToCSV(headers, rows, 'titulos.csv')
+    exportToCSV(headers, rows, 'titulos_vencidos.csv')
   }
 
   function handleExportPDF() {
