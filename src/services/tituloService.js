@@ -27,7 +27,23 @@ async function fetchRaw() {
     _cachePromise = protheusApi
       .get(TITULOS_URL)
       .then(({ data }) => {
-        _cache = extractArray(data)
+        const all = extractArray(data)
+        // Remove duplicatas geradas pelo UNION ALL do ADVPL
+        // Chave: empresa + titulo + cliente + vencimento + reprogramado + saldo
+        const seen = new Set()
+        _cache = all.filter((r) => {
+          const key = [
+            r.EMPRESA ?? r.FILIAL ?? '',
+            r.TITULO  ?? r.NUMERO ?? '',
+            r.COD_CLI ?? r.CODCLI ?? '',
+            r.VENCIMENTO  ?? r.DTVENCTO  ?? '',
+            r.REPROGRAMADO ?? r.DTVENCREA ?? '',
+            r.SALDO   ?? '',
+          ].join('|')
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
         _cacheTs = Date.now()
         _cachePromise = null
         return _cache
