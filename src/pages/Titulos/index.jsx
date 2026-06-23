@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { exportToCSV, exportToPrint } from '../../utils/exportUtils'
 import { Header } from '../../layouts/Header'
@@ -17,6 +17,114 @@ import { formatCurrency, formatDate } from '../../utils/formatters'
 
 const PAGE_SIZE = 15
 
+function TipoMultiSelect({ options, selected, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const toggle = (value) => {
+    onChange(
+      selected.includes(value)
+        ? selected.filter((v) => v !== value)
+        : [...selected, value]
+    )
+  }
+
+  const label = selected.length === 0
+    ? 'Todos os tipos'
+    : selected.length === 1
+      ? selected[0]
+      : `${selected.length} tipos`
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          height: 36,
+          padding: '0 12px',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          background: 'var(--surface)',
+          color: selected.length > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
+          fontSize: '0.875rem',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          whiteSpace: 'nowrap',
+          minWidth: 130,
+        }}
+      >
+        <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+        <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          left: 0,
+          zIndex: 100,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          boxShadow: 'var(--shadow-md)',
+          minWidth: 160,
+          maxHeight: 240,
+          overflowY: 'auto',
+          padding: '4px 0',
+        }}>
+          {options.map((opt) => (
+            <label
+              key={opt}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: 'var(--text-primary)',
+                background: selected.includes(opt) ? 'var(--primary-bg, #eff6ff)' : 'transparent',
+              }}
+              onMouseEnter={(e) => { if (!selected.includes(opt)) e.currentTarget.style.background = 'var(--bg)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = selected.includes(opt) ? 'var(--primary-bg, #eff6ff)' : 'transparent' }}
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(opt)}
+                onChange={() => toggle(opt)}
+                style={{ accentColor: 'var(--primary)', width: 14, height: 14 }}
+              />
+              {opt}
+            </label>
+          ))}
+          {selected.length > 0 && (
+            <div style={{ borderTop: '1px solid var(--border)', padding: '6px 12px' }}>
+              <button
+                type="button"
+                onClick={() => { onChange([]); setOpen(false) }}
+                style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                Limpar seleção
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const FAIXA_OPTIONS = [
   { value: '', label: 'Todas as faixas' },
   { value: '1-30', label: '1 a 30 dias' },
@@ -29,7 +137,7 @@ const FAIXA_OPTIONS = [
 export default function ConsultaTitulos() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [filterTipo, setFilterTipo] = useState('')
+  const [filterTipos, setFilterTipos] = useState([])
   const [filterFaixa, setFilterFaixa] = useState('')
   const [filterAtraso, setFilterAtraso] = useState('')
   const [filterGrupo, setFilterGrupo] = useState('')
@@ -51,13 +159,10 @@ export default function ConsultaTitulos() {
   }, [allTitulos])
 
   // Tipos extraídos dinamicamente da API
-  const tipoOptions = useMemo(() => {
-    const unique = [...new Set(allTitulos.map((t) => t.tipo).filter((t) => t && t !== '—'))].sort()
-    return [
-      { value: '', label: 'Todos os tipos' },
-      ...unique.map((t) => ({ value: t, label: t })),
-    ]
-  }, [allTitulos])
+  const tipoOptions = useMemo(
+    () => [...new Set(allTitulos.map((t) => t.tipo).filter((t) => t && t !== '—'))].sort(),
+    [allTitulos],
+  )
 
   const filtered = useMemo(() => {
     let result = allTitulos
@@ -71,7 +176,7 @@ export default function ConsultaTitulos() {
       )
     }
     if (filterGrupo) result = result.filter((t) => t.grupoCliente === filterGrupo)
-    if (filterTipo) result = result.filter((t) => t.tipo === filterTipo)
+    if (filterTipos.length > 0) result = result.filter((t) => filterTipos.includes(t.tipo))
     if (filterAtraso === 'vencido') result = result.filter((t) => t.isVencido)
     if (filterAtraso === 'no_prazo') result = result.filter((t) => !t.isVencido)
     if (filterFaixa) {
@@ -94,7 +199,7 @@ export default function ConsultaTitulos() {
       return 0
     })
     return result
-  }, [allTitulos, debouncedSearch, filterGrupo, filterTipo, filterFaixa, filterAtraso, sortField, sortDir])
+  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixa, filterAtraso, sortField, sortDir])
 
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
@@ -112,8 +217,8 @@ export default function ConsultaTitulos() {
     </span>
   )
 
-  const hasFilters = search || filterGrupo || filterTipo || filterFaixa || filterAtraso
-  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipo(''); setFilterFaixa(''); setFilterAtraso('') }
+  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixa || filterAtraso
+  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixa(''); setFilterAtraso('') }
 
   function handleExportCSV() {
     const headers = [
@@ -210,9 +315,11 @@ export default function ConsultaTitulos() {
             <Select value={filterGrupo} onChange={(e) => { setFilterGrupo(e.target.value); goToPage(1) }}>
               {grupoOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
-            <Select value={filterTipo} onChange={(e) => { setFilterTipo(e.target.value); goToPage(1) }}>
-              {tipoOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </Select>
+            <TipoMultiSelect
+              options={tipoOptions}
+              selected={filterTipos}
+              onChange={(v) => { setFilterTipos(v); goToPage(1) }}
+            />
             <Select value={filterAtraso} onChange={(e) => { setFilterAtraso(e.target.value); goToPage(1) }}>
               <option value="">Todos</option>
               <option value="vencido">Vencidos</option>
