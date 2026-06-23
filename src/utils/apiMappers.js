@@ -283,10 +283,13 @@ export function computeDashboard(clientes, titulos) {
     .filter((t) => t.inadimplencia === '3')
     .reduce((s, t) => s + t.saldoAtual, 0)
 
-  // Composição da carteira: vencido vs em dia
+  // Composição da carteira: jurídico + vencido restante + em dia
+  const absJuridico = Math.abs(saldoTotalJuridico)
+  const absVencido  = Math.abs(saldoTotalVencido)
   const composicaoCarteira = [
-    { name: 'Total Vencido', value: Math.abs(saldoTotalVencido), fill: '#ef4444' },
-    { name: 'Total em Dia', value: Math.max(0, saldoTotalAberto - saldoTotalVencido), fill: '#2563eb' },
+    { name: 'Jurídico',      value: absJuridico,                          fill: '#dc2626' },
+    { name: 'Total Vencido', value: Math.max(0, absVencido - absJuridico), fill: '#c2410c' },
+    { name: 'Total em Dia',  value: Math.max(0, saldoTotalAberto - absVencido), fill: '#2563eb' },
   ]
 
   // Histórico acumulado de vencidos por mês (E1_VENCTO) — preenche todos os meses
