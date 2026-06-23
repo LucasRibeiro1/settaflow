@@ -203,7 +203,7 @@ export default function ConsultaTitulos() {
         filterAtrasos.some((f) => {
           if (f === 'vencido') return t.isVencido && !t.aVencer
           if (f === 'a_vencer') return t.aVencer
-          if (f === 'no_prazo') return !t.isVencido
+          if (f === 'no_prazo') return !t.isVencido && !t.aVencer
           return false
         })
       )
@@ -406,6 +406,7 @@ export default function ConsultaTitulos() {
                       <th onClick={() => handleSort('emissao')}>Emissão {sortIcon('emissao')}</th>
                       <th onClick={() => handleSort('vencimentoOriginal')}>Venc. Original {sortIcon('vencimentoOriginal')}</th>
                       <th onClick={() => handleSort('vencimentoReal')}>Venc. Reprogramado {sortIcon('vencimentoReal')}</th>
+                      <th onClick={() => handleSort('inadimplencia')}>Inadimplência {sortIcon('inadimplencia')}</th>
                       <th onClick={() => handleSort('diasAtraso')}>Atraso {sortIcon('diasAtraso')}</th>
                       <th onClick={() => handleSort('valorOriginal')}>Valor Original {sortIcon('valorOriginal')}</th>
                       <th onClick={() => handleSort('saldoAtual')}>Saldo Atual {sortIcon('saldoAtual')}</th>
@@ -437,6 +438,17 @@ export default function ConsultaTitulos() {
                         <td style={{ color: 'var(--text-muted)' }}>{formatDate(t.vencimentoOriginal || t.vencimento)}</td>
                         <td style={{ color: t.vencimentoReal ? 'var(--warning)' : 'var(--text-muted)', fontWeight: t.vencimentoReal ? 600 : 400 }}>
                           {t.vencimentoReal ? formatDate(t.vencimentoReal) : '—'}
+                        </td>
+                        <td>
+                          {t.inadimplencia === '3' ? (
+                            <Badge type="danger">Jurídico</Badge>
+                          ) : t.inadimplencia === '2' ? (
+                            <Badge type="warning">Externa</Badge>
+                          ) : t.inadimplencia === '1' ? (
+                            <Badge type="success">Normal</Badge>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>—</span>
+                          )}
                         </td>
                         <td>
                           {t.aVencer ? (
