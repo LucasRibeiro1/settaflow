@@ -84,8 +84,9 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder = 'Selec
           padding: '4px 0',
         }}>
           {normalized.map(({ value, label }) => (
-            <label
-              key={value}
+            <div
+              key={value || '__empty__'}
+              onClick={() => toggle(value)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -94,6 +95,7 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder = 'Selec
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 color: 'var(--text-primary)',
+                userSelect: 'none',
                 background: selected.includes(value) ? 'var(--primary-bg, #eff6ff)' : 'transparent',
               }}
               onMouseEnter={(e) => { if (!selected.includes(value)) e.currentTarget.style.background = 'var(--bg)' }}
@@ -102,11 +104,11 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder = 'Selec
               <input
                 type="checkbox"
                 checked={selected.includes(value)}
-                onChange={() => toggle(value)}
-                style={{ accentColor: 'var(--primary)', width: 14, height: 14 }}
+                readOnly
+                style={{ accentColor: 'var(--primary)', width: 14, height: 14, pointerEvents: 'none' }}
               />
               {label}
-            </label>
+            </div>
           ))}
           {selected.length > 0 && (
             <div style={{ borderTop: '1px solid var(--border)', padding: '6px 12px' }}>
@@ -126,7 +128,6 @@ function MultiSelectDropdown({ options, selected, onChange, placeholder = 'Selec
 }
 
 const FAIXA_OPTIONS = [
-  { value: '', label: 'Todas as faixas' },
   { value: '1-30', label: '1 a 30 dias' },
   { value: '31-60', label: '31 a 60 dias' },
   { value: '61-90', label: '61 a 90 dias' },
@@ -157,7 +158,7 @@ export default function ConsultaTitulos() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [filterTipos, setFilterTipos] = useState([])
-  const [filterFaixa, setFilterFaixa] = useState('')
+  const [filterFaixas, setFilterFaixas] = useState([])
   const [filterAtrasos, setFilterAtrasos] = useState([])
   const [filterGrupo, setFilterGrupo] = useState('')
   const [filterInadimplencias, setFilterInadimplencias] = useState([])
@@ -212,15 +213,17 @@ export default function ConsultaTitulos() {
       result = result.filter((t) => filterInadimplencias.includes(t.inadimplencia))
     if (filterMotivos.length > 0)
       result = result.filter((t) => filterMotivos.includes(t.motivo))
-    if (filterFaixa) {
-      const faixas = {
-        '1-30': (t) => t.diasAtraso >= 1 && t.diasAtraso <= 30,
-        '31-60': (t) => t.diasAtraso >= 31 && t.diasAtraso <= 60,
-        '61-90': (t) => t.diasAtraso >= 61 && t.diasAtraso <= 90,
-        '91-180': (t) => t.diasAtraso >= 91 && t.diasAtraso <= 180,
-        '+180': (t) => t.diasAtraso > 180,
-      }
-      if (faixas[filterFaixa]) result = result.filter(faixas[filterFaixa])
+    if (filterFaixas.length > 0) {
+      result = result.filter((t) =>
+        filterFaixas.some((f) => {
+          if (f === '1-30')   return t.diasAtraso >= 1   && t.diasAtraso <= 30
+          if (f === '31-60')  return t.diasAtraso >= 31  && t.diasAtraso <= 60
+          if (f === '61-90')  return t.diasAtraso >= 61  && t.diasAtraso <= 90
+          if (f === '91-180') return t.diasAtraso >= 91  && t.diasAtraso <= 180
+          if (f === '+180')   return t.diasAtraso > 180
+          return false
+        })
+      )
     }
     result = [...result].sort((a, b) => {
       let va = a[sortField]
@@ -232,7 +235,7 @@ export default function ConsultaTitulos() {
       return 0
     })
     return result
-  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixa, filterAtrasos, filterInadimplencias, filterMotivos, sortField, sortDir])
+  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixas, filterAtrasos, filterInadimplencias, filterMotivos, sortField, sortDir])
 
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
@@ -250,8 +253,8 @@ export default function ConsultaTitulos() {
     </span>
   )
 
-  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixa || filterAtrasos.length > 0 || filterInadimplencias.length > 0 || filterMotivos.length > 0
-  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixa(''); setFilterAtrasos([]); setFilterInadimplencias([]); setFilterMotivos([]) }
+  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixas.length > 0 || filterAtrasos.length > 0 || filterInadimplencias.length > 0 || filterMotivos.length > 0
+  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixas([]); setFilterAtrasos([]); setFilterInadimplencias([]); setFilterMotivos([]) }
 
   function handleExportCSV() {
     const headers = [
@@ -372,9 +375,12 @@ export default function ConsultaTitulos() {
               onChange={(v) => { setFilterMotivos(v); goToPage(1) }}
               placeholder="Motivo"
             />
-            <Select value={filterFaixa} onChange={(e) => { setFilterFaixa(e.target.value); goToPage(1) }}>
-              {FAIXA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </Select>
+            <MultiSelectDropdown
+              options={FAIXA_OPTIONS}
+              selected={filterFaixas}
+              onChange={(v) => { setFilterFaixas(v); goToPage(1) }}
+              placeholder="Faixa de atraso"
+            />
             {hasFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>✕ Limpar</Button>
             )}
@@ -406,10 +412,10 @@ export default function ConsultaTitulos() {
                       <th onClick={() => handleSort('emissao')}>Emissão {sortIcon('emissao')}</th>
                       <th onClick={() => handleSort('vencimentoOriginal')}>Venc. Original {sortIcon('vencimentoOriginal')}</th>
                       <th onClick={() => handleSort('vencimentoReal')}>Venc. Reprogramado {sortIcon('vencimentoReal')}</th>
-                      <th onClick={() => handleSort('inadimplencia')}>Inadimplência {sortIcon('inadimplencia')}</th>
                       <th onClick={() => handleSort('diasAtraso')}>Atraso {sortIcon('diasAtraso')}</th>
                       <th onClick={() => handleSort('valorOriginal')}>Valor Original {sortIcon('valorOriginal')}</th>
                       <th onClick={() => handleSort('saldoAtual')}>Saldo Atual {sortIcon('saldoAtual')}</th>
+                      <th onClick={() => handleSort('inadimplencia')}>Inadimplência {sortIcon('inadimplencia')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -440,17 +446,6 @@ export default function ConsultaTitulos() {
                           {t.vencimentoReal ? formatDate(t.vencimentoReal) : '—'}
                         </td>
                         <td>
-                          {t.inadimplencia === '3' ? (
-                            <Badge type="danger">Jurídico</Badge>
-                          ) : t.inadimplencia === '2' ? (
-                            <Badge type="warning">Externa</Badge>
-                          ) : t.inadimplencia === '1' ? (
-                            <Badge type="success">Normal</Badge>
-                          ) : (
-                            <span style={{ color: 'var(--text-muted)' }}>—</span>
-                          )}
-                        </td>
-                        <td>
                           {t.aVencer ? (
                             <Badge type="warning">A Vencer</Badge>
                           ) : t.diasAtraso > 0 ? (
@@ -464,6 +459,17 @@ export default function ConsultaTitulos() {
                         <td>{formatCurrency(t.valorOriginal)}</td>
                         <td style={{ fontWeight: 700, color: (t.isVencido || t.aVencer) ? 'var(--danger)' : 'var(--success)' }}>
                           {formatCurrency(t.saldoAtual)}
+                        </td>
+                        <td>
+                          {t.inadimplencia === '3' ? (
+                            <Badge type="danger">Jurídico</Badge>
+                          ) : t.inadimplencia === '2' ? (
+                            <Badge type="warning">Externa</Badge>
+                          ) : t.inadimplencia === '1' ? (
+                            <Badge type="success">Normal</Badge>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -479,6 +485,7 @@ export default function ConsultaTitulos() {
                       <td style={{ padding: '12px 16px', fontWeight: 800, color: 'var(--danger)', fontSize: '0.875rem' }}>
                         {formatCurrency(paginatedData.reduce((s, t) => s + t.saldoAtual, 0))}
                       </td>
+                      <td />
                     </tr>
                   </tfoot>
                 </table>
