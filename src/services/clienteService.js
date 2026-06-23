@@ -26,13 +26,24 @@ async function fetchAllEnriched() {
   const now = Date.now()
   if (_cache && now - _cacheTs < CACHE_TTL) return _cache
   if (!_cachePromise) {
-    _cachePromise = Promise.all([
+    const fetchFilial = (filial) =>
       protheusApi
-        .get(CLIENTES_URL, { params: { empresa: '01', filial: '0201' } })
-        .then(({ data }) => extractArray(data).map(mapCliente)),
+        .get(CLIENTES_URL, { params: { empresa: '01', filial } })
+        .then(({ data }) => extractArray(data).map(mapCliente))
+
+    _cachePromise = Promise.all([
+      fetchFilial('0201'),
+      fetchFilial('0301'),
       tituloService.getTitulosRaw(),
     ])
-      .then(([clientesRaw, titulos]) => {
+      .then(([clientes0201, clientes0301, titulos]) => {
+        // Mescla clientes de todas as filiais, priorizando a primeira ocorrência
+        const seen = new Set()
+        const clientesRaw = [...clientes0201, ...clientes0301].filter((c) => {
+          if (seen.has(c.id)) return false
+          seen.add(c.id)
+          return true
+        })
         _cache = enrichClientesWithTitulos(clientesRaw, titulos)
         _cacheTs = Date.now()
         _cachePromise = null
