@@ -104,25 +104,25 @@ export function mapCliente(raw) {
 export function mapTitulo(raw, clienteMap) {
   // COD_CLI = CODCLI + LOJA concatenados (ex: "00194701" = "001947" + "01")
   const codCliRaw = String(raw.COD_CLI ?? raw.CODCLI ?? raw.codcli ?? '').trim()
-  const loja    = codCliRaw.length >= 2 ? codCliRaw.slice(-2) : '01'
-  const codcli  = codCliRaw.length >= 2 ? codCliRaw.slice(0, -2) : codCliRaw
+  const loja = codCliRaw.length >= 2 ? codCliRaw.slice(-2) : '01'
+  const codcli = codCliRaw.length >= 2 ? codCliRaw.slice(0, -2) : codCliRaw
   const empresa = String(raw.EMPRESA ?? raw.FILIAL ?? raw.filial ?? '').trim()
   const clienteKey = `${codcli}-${loja}`
   const cliente = clienteMap?.[clienteKey]
 
-  const vencimentoOriginal = parseProtheusDate(raw.VENCIMENTO ?? raw.DTVENCTO  ?? raw.dtvencto)
-  const vencimentoReal     = parseProtheusDate(raw.REPROGRAMADO ?? raw.DTVENCREA ?? raw.dtvencrea)
+  const vencimentoOriginal = parseProtheusDate(raw.VENCIMENTO ?? raw.DTVENCTO ?? raw.dtvencto)
+  const vencimentoReal = parseProtheusDate(raw.REPROGRAMADO ?? raw.DTVENCREA ?? raw.dtvencrea)
 
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
   // Regra de vencimento baseada em E1_VENCTO (VENCIMENTO original)
   const isVencido = vencimentoOriginal !== null && vencimentoOriginal < hoje
-  const aVencer   = vencimentoOriginal !== null && vencimentoOriginal.getTime() === hoje.getTime()
+  const aVencer = vencimentoOriginal !== null && vencimentoOriginal.getTime() === hoje.getTime()
   const diasAtraso = calcDiasAtraso(vencimentoOriginal)
 
-  const emissao = parseProtheusDate(raw.EMISSAO  ?? raw.DTEMISSAO ?? raw.dtemissao)
-  const dtBaixa = parseProtheusDate(raw.BAIXA    ?? raw.DTBAIXA   ?? raw.dtbaixa)
+  const emissao = parseProtheusDate(raw.EMISSAO ?? raw.DTEMISSAO ?? raw.dtemissao)
+  const dtBaixa = parseProtheusDate(raw.BAIXA ?? raw.DTBAIXA ?? raw.dtbaixa)
 
-  const numero  = String(raw.TITULO  ?? raw.NUMERO  ?? raw.numero  ?? '').trim()
+  const numero = String(raw.TITULO ?? raw.NUMERO ?? raw.numero ?? '').trim()
   const prefixo = String(raw.PREFIXO ?? raw.prefixo ?? '').trim()
   const parcela = String(raw.PARCELA ?? raw.parcela ?? '').trim()
 
@@ -146,13 +146,13 @@ export function mapTitulo(raw, clienteMap) {
     isVencido,
     aVencer,
     valorOriginal: parseFloat(raw.VALOR ?? 0) || 0,
-    saldoAtual:   parseFloat(raw.SALDO ?? 0) || 0,
+    saldoAtual: parseFloat(raw.SALDO ?? 0) || 0,
     vendedor: String(raw.GRUPO_VEN ?? raw.VENDEDOR ?? raw.vendedor ?? '').trim(),
-    historico:    String(raw.HISTORICO    ?? '').trim(),
-    natureza:     String(raw.NATUREZA     ?? '').trim(),
+    historico: String(raw.HISTORICO ?? '').trim(),
+    natureza: String(raw.NATUREZA ?? '').trim(),
     inadimplencia: String(raw.INADIMPLENCIA ?? '').trim(),
-    motivo:       String(raw.MOTIVO       ?? '').trim(),
-    pedido:       String(raw.PEDIDO       ?? '').trim(),
+    motivo: String(raw.MOTIVO ?? '').trim(),
+    pedido: String(raw.PEDIDO ?? '').trim(),
   }
 }
 
@@ -203,18 +203,18 @@ export function enrichClientesWithTitulos(clientes, titulos) {
 }
 
 const STATUS_CONFIG = {
-  sem_contato:        { label: 'Sem Contato',    cor: '#ef4444' },
-  em_cobranca:        { label: 'Em Cobrança',    cor: '#f59e0b' },
-  negociacao:         { label: 'Negociação',     cor: '#8b5cf6' },
-  promessa_pagamento: { label: 'Promessa Pgto',  cor: '#06b6d4' },
-  aguardando_retorno: { label: 'Aguardando',     cor: '#f97316' },
-  acordo_realizado:   { label: 'Acordo',         cor: '#10b981' },
-  sem_acordo:         { label: 'Sem Acordo',     cor: '#dc2626' },
+  sem_contato: { label: 'Sem Contato', cor: '#ef4444' },
+  em_cobranca: { label: 'Em Cobrança', cor: '#f59e0b' },
+  negociacao: { label: 'Negociação', cor: '#8b5cf6' },
+  promessa_pagamento: { label: 'Promessa Pgto', cor: '#06b6d4' },
+  aguardando_retorno: { label: 'Aguardando', cor: '#f97316' },
+  acordo_realizado: { label: 'Acordo', cor: '#10b981' },
+  sem_acordo: { label: 'Sem Acordo', cor: '#dc2626' },
 }
 
 export function computeDashboard(clientes, titulos) {
   // SQL já garante E1_SALDO > 0 no WHERE; IS-/IN- retornam saldo negativo da API
-  const titulosAbertos  = titulos.filter((t) => isTituloValido(t))
+  const titulosAbertos = titulos.filter((t) => isTituloValido(t))
   const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
 
   const clientesComAtraso = clientes.filter((c) => c.qtdTitulosVencidos > 0)
@@ -240,11 +240,11 @@ export function computeDashboard(clientes, titulos) {
 
   // Faixas: cada cliente conta em uma única faixa (sua pior, maiorAtraso)
   const faixaBuckets = {
-    '1-30d':   { faixa: '1-30d',   quantidade: 0, valor: 0 },
-    '31-60d':  { faixa: '31-60d',  quantidade: 0, valor: 0 },
-    '61-90d':  { faixa: '61-90d',  quantidade: 0, valor: 0 },
+    '1-30d': { faixa: '1-30d', quantidade: 0, valor: 0 },
+    '31-60d': { faixa: '31-60d', quantidade: 0, valor: 0 },
+    '61-90d': { faixa: '61-90d', quantidade: 0, valor: 0 },
     '91-180d': { faixa: '91-180d', quantidade: 0, valor: 0 },
-    '+180d':   { faixa: '+180d',   quantidade: 0, valor: 0 },
+    '+180d': { faixa: '+180d', quantidade: 0, valor: 0 },
   }
   for (const c of clientesComAtraso) {
     const d = c.maiorAtraso
@@ -274,19 +274,19 @@ export function computeDashboard(clientes, titulos) {
     }))
 
   const maioresDevedores = devedoresOrdenados.slice(0, 10)
-  const todosDevedores   = devedoresOrdenados
+  const todosDevedores = devedoresOrdenados
 
   // API já retorna SALDO negativo para tipos IS-/IN-, soma direta
-  const saldoTotalAberto   = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
-  const saldoTotalVencido  = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalAberto = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
   const saldoTotalJuridico = titulosVencidos
     .filter((t) => t.inadimplencia === '3')
     .reduce((s, t) => s + t.saldoAtual, 0)
 
   // Composição da carteira: vencido vs em dia
   const composicaoCarteira = [
-    { name: 'Total Vencido',    value: Math.abs(saldoTotalVencido),                          fill: '#ef4444' },
-    { name: 'Total em Dia',     value: Math.max(0, saldoTotalAberto - saldoTotalVencido),    fill: '#2563eb' },
+    { name: 'Total Vencido', value: Math.abs(saldoTotalVencido), fill: '#ef4444' },
+    { name: 'Total em Dia', value: Math.max(0, saldoTotalAberto - saldoTotalVencido), fill: '#2563eb' },
   ]
 
   // Histórico acumulado de vencidos por mês (E1_VENCTO) — preenche todos os meses
@@ -336,7 +336,7 @@ export function computeDashboard(clientes, titulos) {
       saldoTotalAberto,
       saldoTotalVencido,
       saldoTotalJuridico,
-      totalTitulosVencidos: titulosVencidos.filter((t) => t.tipo === 'NF').length,
+      totalTitulosVencidos: titulosVencidos.filter((t) => t.tipo === 'NF' || t.tipo === 'ADI' || t.tipo === 'PR').length,
       clientesSemContatoMais30Dias: clientesComAtraso.filter((c) => c.maiorAtraso > 30).length,
       promessasPendentes: 0,
       valorPrevistoRecebimento: 0,
