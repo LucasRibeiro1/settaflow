@@ -336,7 +336,7 @@ export function computeDashboard(clientes, titulos) {
       saldoTotalAberto,
       saldoTotalVencido,
       saldoTotalJuridico,
-      totalTitulosVencidos: titulosVencidos.length,
+      totalTitulosVencidos: titulosVencidos.filter((t) => t.tipo === 'NF').length,
       clientesSemContatoMais30Dias: clientesComAtraso.filter((c) => c.maiorAtraso > 30).length,
       promessasPendentes: 0,
       valorPrevistoRecebimento: 0,
