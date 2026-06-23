@@ -116,6 +116,8 @@ export function mapTitulo(raw, clienteMap) {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
   // Vencido = REPROGRAMADO preenchido E REPROGRAMADO <= hoje (equivalente a E1_VENCREA <= CURDATE())
   const isVencido = vencimentoReal !== null && vencimentoReal <= hoje
+  // A vencer = vence exatamente hoje
+  const aVencer = vencimentoReal !== null && vencimentoReal.getTime() === hoje.getTime()
   const diasAtraso = calcDiasAtraso(vencimentoReal)
 
   const emissao = parseProtheusDate(raw.EMISSAO  ?? raw.DTEMISSAO ?? raw.dtemissao)
@@ -143,6 +145,7 @@ export function mapTitulo(raw, clienteMap) {
     dtBaixa,
     diasAtraso,
     isVencido,
+    aVencer,
     valorOriginal: parseFloat(raw.VALOR ?? 0) || 0,
     saldoAtual:   parseFloat(raw.SALDO ?? 0) || 0,
     vendedor: String(raw.GRUPO_VEN ?? raw.VENDEDOR ?? raw.vendedor ?? '').trim(),

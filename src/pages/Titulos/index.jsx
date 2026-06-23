@@ -17,9 +17,13 @@ import { formatCurrency, formatDate } from '../../utils/formatters'
 
 const PAGE_SIZE = 15
 
-function TipoMultiSelect({ options, selected, onChange }) {
+// options: string[] ou {value, label}[] — placeholder exibido quando nada selecionado
+function MultiSelectDropdown({ options, selected, onChange, placeholder = 'Selecionar' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+
+  // Normaliza opções para sempre {value, label}
+  const normalized = options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o))
 
   useEffect(() => {
     function handleClick(e) {
@@ -30,18 +34,14 @@ function TipoMultiSelect({ options, selected, onChange }) {
   }, [])
 
   const toggle = (value) => {
-    onChange(
-      selected.includes(value)
-        ? selected.filter((v) => v !== value)
-        : [...selected, value]
-    )
+    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value])
   }
 
-  const label = selected.length === 0
-    ? 'Todos os tipos'
+  const displayLabel = selected.length === 0
+    ? placeholder
     : selected.length === 1
-      ? selected[0]
-      : `${selected.length} tipos`
+      ? (normalized.find((o) => o.value === selected[0])?.label ?? selected[0])
+      : `${selected.length} selecionados`
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -64,7 +64,7 @@ function TipoMultiSelect({ options, selected, onChange }) {
           minWidth: 130,
         }}
       >
-        <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+        <span style={{ flex: 1, textAlign: 'left' }}>{displayLabel}</span>
         <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{open ? '▲' : '▼'}</span>
       </button>
 
@@ -78,14 +78,14 @@ function TipoMultiSelect({ options, selected, onChange }) {
           border: '1px solid var(--border)',
           borderRadius: 'var(--radius)',
           boxShadow: 'var(--shadow-md)',
-          minWidth: 160,
+          minWidth: 170,
           maxHeight: 240,
           overflowY: 'auto',
           padding: '4px 0',
         }}>
-          {options.map((opt) => (
+          {normalized.map(({ value, label }) => (
             <label
-              key={opt}
+              key={value}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -94,18 +94,18 @@ function TipoMultiSelect({ options, selected, onChange }) {
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 color: 'var(--text-primary)',
-                background: selected.includes(opt) ? 'var(--primary-bg, #eff6ff)' : 'transparent',
+                background: selected.includes(value) ? 'var(--primary-bg, #eff6ff)' : 'transparent',
               }}
-              onMouseEnter={(e) => { if (!selected.includes(opt)) e.currentTarget.style.background = 'var(--bg)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = selected.includes(opt) ? 'var(--primary-bg, #eff6ff)' : 'transparent' }}
+              onMouseEnter={(e) => { if (!selected.includes(value)) e.currentTarget.style.background = 'var(--bg)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = selected.includes(value) ? 'var(--primary-bg, #eff6ff)' : 'transparent' }}
             >
               <input
                 type="checkbox"
-                checked={selected.includes(opt)}
-                onChange={() => toggle(opt)}
+                checked={selected.includes(value)}
+                onChange={() => toggle(value)}
                 style={{ accentColor: 'var(--primary)', width: 14, height: 14 }}
               />
-              {opt}
+              {label}
             </label>
           ))}
           {selected.length > 0 && (
@@ -134,12 +134,18 @@ const FAIXA_OPTIONS = [
   { value: '+180', label: 'Acima de 180 dias' },
 ]
 
+const ATRASO_OPTIONS = [
+  { value: 'vencido',   label: 'Vencidos' },
+  { value: 'a_vencer',  label: 'A Vencer (hoje)' },
+  { value: 'no_prazo',  label: 'No Prazo' },
+]
+
 export default function ConsultaTitulos() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [filterTipos, setFilterTipos] = useState([])
   const [filterFaixa, setFilterFaixa] = useState('')
-  const [filterAtraso, setFilterAtraso] = useState('')
+  const [filterAtrasos, setFilterAtrasos] = useState([])
   const [filterGrupo, setFilterGrupo] = useState('')
   const [sortField, setSortField] = useState('diasAtraso')
   const [sortDir, setSortDir] = useState('desc')
@@ -177,8 +183,16 @@ export default function ConsultaTitulos() {
     }
     if (filterGrupo) result = result.filter((t) => t.grupoCliente === filterGrupo)
     if (filterTipos.length > 0) result = result.filter((t) => filterTipos.includes(t.tipo))
-    if (filterAtraso === 'vencido') result = result.filter((t) => t.isVencido)
-    if (filterAtraso === 'no_prazo') result = result.filter((t) => !t.isVencido)
+    if (filterAtrasos.length > 0) {
+      result = result.filter((t) =>
+        filterAtrasos.some((f) => {
+          if (f === 'vencido')   return t.isVencido && !t.aVencer
+          if (f === 'a_vencer')  return t.aVencer
+          if (f === 'no_prazo')  return !t.isVencido
+          return false
+        })
+      )
+    }
     if (filterFaixa) {
       const faixas = {
         '1-30':   (t) => t.diasAtraso >= 1 && t.diasAtraso <= 30,
@@ -199,7 +213,7 @@ export default function ConsultaTitulos() {
       return 0
     })
     return result
-  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixa, filterAtraso, sortField, sortDir])
+  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixa, filterAtrasos, sortField, sortDir])
 
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
@@ -217,8 +231,8 @@ export default function ConsultaTitulos() {
     </span>
   )
 
-  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixa || filterAtraso
-  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixa(''); setFilterAtraso('') }
+  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixa || filterAtrasos.length > 0
+  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixa(''); setFilterAtrasos([]) }
 
   function handleExportCSV() {
     const headers = [
@@ -315,16 +329,18 @@ export default function ConsultaTitulos() {
             <Select value={filterGrupo} onChange={(e) => { setFilterGrupo(e.target.value); goToPage(1) }}>
               {grupoOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
-            <TipoMultiSelect
+            <MultiSelectDropdown
               options={tipoOptions}
               selected={filterTipos}
               onChange={(v) => { setFilterTipos(v); goToPage(1) }}
+              placeholder="Todos os tipos"
             />
-            <Select value={filterAtraso} onChange={(e) => { setFilterAtraso(e.target.value); goToPage(1) }}>
-              <option value="">Todos</option>
-              <option value="vencido">Vencidos</option>
-              <option value="no_prazo">No prazo</option>
-            </Select>
+            <MultiSelectDropdown
+              options={ATRASO_OPTIONS}
+              selected={filterAtrasos}
+              onChange={(v) => { setFilterAtrasos(v); goToPage(1) }}
+              placeholder="Situação"
+            />
             <Select value={filterFaixa} onChange={(e) => { setFilterFaixa(e.target.value); goToPage(1) }}>
               {FAIXA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
