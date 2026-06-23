@@ -228,7 +228,9 @@ export function computeDashboard(clientes, titulos) {
   let totalClientesInadimplentes = 0
   for (const c of clientesComAtraso) {
     const g = c.grupoCliente && c.grupoCliente !== '—' ? c.grupoCliente : null
-    if (!g || GRUPOS_POR_CLIENTE.has(g)) {
+    if (!g) {
+      // sem grupo — não contabiliza
+    } else if (GRUPOS_POR_CLIENTE.has(g)) {
       totalClientesInadimplentes++
     } else if (!gruposJaContados.has(g)) {
       gruposJaContados.add(g)
