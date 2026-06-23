@@ -135,9 +135,9 @@ const FAIXA_OPTIONS = [
 ]
 
 const ATRASO_OPTIONS = [
-  { value: 'vencido',   label: 'Vencidos' },
-  { value: 'a_vencer',  label: 'A Vencer (hoje)' },
-  { value: 'no_prazo',  label: 'No Prazo' },
+  { value: 'vencido', label: 'Vencidos' },
+  { value: 'a_vencer', label: 'A Vencer (hoje)' },
+  { value: 'no_prazo', label: 'No Prazo' },
 ]
 
 export default function ConsultaTitulos() {
@@ -186,20 +186,20 @@ export default function ConsultaTitulos() {
     if (filterAtrasos.length > 0) {
       result = result.filter((t) =>
         filterAtrasos.some((f) => {
-          if (f === 'vencido')   return t.isVencido && !t.aVencer
-          if (f === 'a_vencer')  return t.aVencer
-          if (f === 'no_prazo')  return !t.isVencido
+          if (f === 'vencido') return t.isVencido && !t.aVencer
+          if (f === 'a_vencer') return t.aVencer
+          if (f === 'no_prazo') return !t.isVencido
           return false
         })
       )
     }
     if (filterFaixa) {
       const faixas = {
-        '1-30':   (t) => t.diasAtraso >= 1 && t.diasAtraso <= 30,
-        '31-60':  (t) => t.diasAtraso >= 31 && t.diasAtraso <= 60,
-        '61-90':  (t) => t.diasAtraso >= 61 && t.diasAtraso <= 90,
+        '1-30': (t) => t.diasAtraso >= 1 && t.diasAtraso <= 30,
+        '31-60': (t) => t.diasAtraso >= 31 && t.diasAtraso <= 60,
+        '61-90': (t) => t.diasAtraso >= 61 && t.diasAtraso <= 90,
         '91-180': (t) => t.diasAtraso >= 91 && t.diasAtraso <= 180,
-        '+180':   (t) => t.diasAtraso > 180,
+        '+180': (t) => t.diasAtraso > 180,
       }
       if (faixas[filterFaixa]) result = result.filter(faixas[filterFaixa])
     }
@@ -373,8 +373,8 @@ export default function ConsultaTitulos() {
                       <th>Parcela</th>
                       <th onClick={() => handleSort('tipo')}>Tipo {sortIcon('tipo')}</th>
                       <th onClick={() => handleSort('emissao')}>Emissão {sortIcon('emissao')}</th>
-                      <th onClick={() => handleSort('vencimentoOriginal')}>Vencimento {sortIcon('vencimentoOriginal')}</th>
-                      <th onClick={() => handleSort('vencimentoReal')}>Venc. Real {sortIcon('vencimentoReal')}</th>
+                      <th onClick={() => handleSort('vencimentoOriginal')}>Venc. Original {sortIcon('vencimentoOriginal')}</th>
+                      <th onClick={() => handleSort('vencimentoReal')}>Venc. Reprogramado {sortIcon('vencimentoReal')}</th>
                       <th onClick={() => handleSort('diasAtraso')}>Atraso {sortIcon('diasAtraso')}</th>
                       <th onClick={() => handleSort('valorOriginal')}>Valor Original {sortIcon('valorOriginal')}</th>
                       <th onClick={() => handleSort('saldoAtual')}>Saldo Atual {sortIcon('saldoAtual')}</th>
@@ -408,7 +408,9 @@ export default function ConsultaTitulos() {
                           {t.vencimentoReal ? formatDate(t.vencimentoReal) : '—'}
                         </td>
                         <td>
-                          {t.diasAtraso > 0 ? (
+                          {t.aVencer ? (
+                            <Badge type="warning">A Vencer</Badge>
+                          ) : t.diasAtraso > 0 ? (
                             <Badge type={t.diasAtraso > 120 ? 'danger' : t.diasAtraso > 60 ? 'warning' : 'info'}>
                               {t.diasAtraso}d
                             </Badge>
@@ -417,7 +419,7 @@ export default function ConsultaTitulos() {
                           )}
                         </td>
                         <td>{formatCurrency(t.valorOriginal)}</td>
-                        <td style={{ fontWeight: 700, color: t.diasAtraso > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                        <td style={{ fontWeight: 700, color: (t.isVencido || t.aVencer) ? 'var(--danger)' : 'var(--success)' }}>
                           {formatCurrency(t.saldoAtual)}
                         </td>
                       </tr>

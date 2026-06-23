@@ -114,11 +114,10 @@ export function mapTitulo(raw, clienteMap) {
   const vencimentoReal     = parseProtheusDate(raw.REPROGRAMADO ?? raw.DTVENCREA ?? raw.dtvencrea)
 
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
-  // Vencido = REPROGRAMADO preenchido E REPROGRAMADO <= hoje (equivalente a E1_VENCREA <= CURDATE())
-  const isVencido = vencimentoReal !== null && vencimentoReal <= hoje
-  // A vencer = vence exatamente hoje
-  const aVencer = vencimentoReal !== null && vencimentoReal.getTime() === hoje.getTime()
-  const diasAtraso = calcDiasAtraso(vencimentoReal)
+  // Regra de vencimento baseada em E1_VENCTO (VENCIMENTO original)
+  const isVencido = vencimentoOriginal !== null && vencimentoOriginal < hoje
+  const aVencer   = vencimentoOriginal !== null && vencimentoOriginal.getTime() === hoje.getTime()
+  const diasAtraso = calcDiasAtraso(vencimentoOriginal)
 
   const emissao = parseProtheusDate(raw.EMISSAO  ?? raw.DTEMISSAO ?? raw.dtemissao)
   const dtBaixa = parseProtheusDate(raw.BAIXA    ?? raw.DTBAIXA   ?? raw.dtbaixa)
@@ -186,7 +185,7 @@ export function enrichClientesWithTitulos(clientes, titulos) {
     } else if (t.saldoAtual !== 0) {
       // SQL garante E1_SALDO > 0; IS-/IN- retornam negativo e reduzem o total corretamente
       c.valorTotalAberto += t.saldoAtual
-      if (t.isVencido) {
+      if (t.isVencido || t.aVencer) {
         c.qtdTitulosVencidos += 1
         if (t.diasAtraso > c.maiorAtraso) c.maiorAtraso = t.diasAtraso
       }
@@ -216,7 +215,7 @@ const STATUS_CONFIG = {
 export function computeDashboard(clientes, titulos) {
   // SQL já garante E1_SALDO > 0 no WHERE; IS-/IN- retornam saldo negativo da API
   const titulosAbertos  = titulos.filter((t) => isTituloValido(t))
-  const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
+  const titulosVencidos = titulosAbertos.filter((t) => t.isVencido || t.aVencer)
 
   const clientesComAtraso = clientes.filter((c) => c.qtdTitulosVencidos > 0)
   const limiteCreditoTotal = clientes.reduce((s, c) => s + c.limiteCredito, 0)
@@ -270,12 +269,12 @@ export function computeDashboard(clientes, titulos) {
     { name: 'Total em Dia',     value: Math.max(0, saldoTotalAberto - saldoTotalVencido),    fill: '#2563eb' },
   ]
 
-  // Histórico acumulado de vencidos por mês (REPROGRAMADO) — preenche todos os meses
+  // Histórico acumulado de vencidos por mês (E1_VENCTO) — preenche todos os meses
   const mesMap = {}
   for (const t of titulosVencidos) {
-    if (!t.vencimentoReal) continue
-    const y = t.vencimentoReal.getFullYear()
-    const m = t.vencimentoReal.getMonth() + 1
+    if (!t.vencimentoOriginal) continue
+    const y = t.vencimentoOriginal.getFullYear()
+    const m = t.vencimentoOriginal.getMonth() + 1
     const key = `${y}-${String(m).padStart(2, '0')}`
     mesMap[key] = (mesMap[key] || 0) + Math.abs(t.saldoAtual)
   }
