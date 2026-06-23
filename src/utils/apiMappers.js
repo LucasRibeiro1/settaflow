@@ -221,6 +221,21 @@ export function computeDashboard(clientes, titulos) {
   const limiteCreditoTotal = clientes.reduce((s, c) => s + c.limiteCredito, 0)
   const valorTotalAberto = clientesComAtraso.reduce((s, c) => s + c.valorTotalAberto, 0)
 
+  // Card "Clientes Inadimplentes": grupos 000001 e 000027 contam por cliente;
+  // demais grupos contam uma vez por grupo (clientes sem grupo contam individualmente)
+  const GRUPOS_POR_CLIENTE = new Set(['000001', '000027'])
+  const gruposJaContados = new Set()
+  let totalClientesInadimplentes = 0
+  for (const c of clientesComAtraso) {
+    const g = c.grupoCliente && c.grupoCliente !== '—' ? c.grupoCliente : null
+    if (!g || GRUPOS_POR_CLIENTE.has(g)) {
+      totalClientesInadimplentes++
+    } else if (!gruposJaContados.has(g)) {
+      gruposJaContados.add(g)
+      totalClientesInadimplentes++
+    }
+  }
+
   // Faixas: cada cliente conta em uma única faixa (sua pior, maiorAtraso)
   const faixaBuckets = {
     '1-30d':   { faixa: '1-30d',   quantidade: 0, valor: 0 },
@@ -314,7 +329,7 @@ export function computeDashboard(clientes, titulos) {
 
   return {
     resumo: {
-      totalClientesInadimplentes: clientesComAtraso.length,
+      totalClientesInadimplentes,
       valorTotalAberto,
       saldoTotalAberto,
       saldoTotalVencido,
