@@ -118,8 +118,8 @@ export default function Dashboard() {
       <>
         <Header title="Dashboard" subtitle="Visão executiva da carteira de inadimplência" />
         <div className="page-content">
-          <div className="grid grid-4" style={{ marginBottom: 24 }}>
-            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          <div className="grid grid-5" style={{ marginBottom: 24 }}>
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         </div>
       </>
@@ -130,6 +130,7 @@ export default function Dashboard() {
     resumo, composicaoCarteira, percInadimplencia,
     clientesPorFaixaAtraso, clientesPorStatus, evolucaoMensal, maioresDevedores, todosDevedores,
   } = data
+  const saldoTotalJuridico = resumo.saldoTotalJuridico ?? 0
 
   const rankTotal = todosDevedores?.length ?? 0
   const rankTotalPages = Math.ceil(rankTotal / RANK_PAGE_SIZE)
@@ -163,6 +164,14 @@ export default function Dashboard() {
       onClick: () => navigate('/titulos'),
     },
     {
+      label: 'Jurídico',
+      value: formatCurrency(saldoTotalJuridico),
+      sub: 'Saldo em cobrança jurídica',
+      icon: '⚖️',
+      color: 'danger',
+      onClick: () => navigate('/titulos'),
+    },
+    {
       label: 'Títulos Vencidos',
       value: resumo.totalTitulosVencidos,
       sub: 'Total de documentos',
@@ -185,7 +194,7 @@ export default function Dashboard() {
       <div className="page-content fade-in">
 
         {/* Summary Cards */}
-        <div className="grid grid-4" style={{ marginBottom: 24 }}>
+        <div className="grid grid-5" style={{ marginBottom: 24 }}>
           {summaryCards.map((card, i) => (
             <div
               key={i}

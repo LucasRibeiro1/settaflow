@@ -140,6 +140,19 @@ const ATRASO_OPTIONS = [
   { value: 'no_prazo', label: 'No Prazo' },
 ]
 
+const INADIMPLENCIA_OPTIONS = [
+  { value: '1', label: 'Normal' },
+  { value: '2', label: 'Externa' },
+  { value: '3', label: 'Jurídico' },
+  { value: '',  label: 'Sem classificação' },
+]
+
+const MOTIVO_OPTIONS = [
+  { value: '1', label: 'SETTA' },
+  { value: '2', label: 'CLIENTE' },
+  { value: '',  label: 'Sem motivo' },
+]
+
 export default function ConsultaTitulos() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -147,6 +160,8 @@ export default function ConsultaTitulos() {
   const [filterFaixa, setFilterFaixa] = useState('')
   const [filterAtrasos, setFilterAtrasos] = useState([])
   const [filterGrupo, setFilterGrupo] = useState('')
+  const [filterInadimplencias, setFilterInadimplencias] = useState([])
+  const [filterMotivos, setFilterMotivos] = useState([])
   const [sortField, setSortField] = useState('diasAtraso')
   const [sortDir, setSortDir] = useState('desc')
 
@@ -193,6 +208,10 @@ export default function ConsultaTitulos() {
         })
       )
     }
+    if (filterInadimplencias.length > 0)
+      result = result.filter((t) => filterInadimplencias.includes(t.inadimplencia))
+    if (filterMotivos.length > 0)
+      result = result.filter((t) => filterMotivos.includes(t.motivo))
     if (filterFaixa) {
       const faixas = {
         '1-30': (t) => t.diasAtraso >= 1 && t.diasAtraso <= 30,
@@ -213,7 +232,7 @@ export default function ConsultaTitulos() {
       return 0
     })
     return result
-  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixa, filterAtrasos, sortField, sortDir])
+  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixa, filterAtrasos, filterInadimplencias, filterMotivos, sortField, sortDir])
 
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
@@ -231,8 +250,8 @@ export default function ConsultaTitulos() {
     </span>
   )
 
-  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixa || filterAtrasos.length > 0
-  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixa(''); setFilterAtrasos([]) }
+  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixa || filterAtrasos.length > 0 || filterInadimplencias.length > 0 || filterMotivos.length > 0
+  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixa(''); setFilterAtrasos([]); setFilterInadimplencias([]); setFilterMotivos([]) }
 
   function handleExportCSV() {
     const headers = [
@@ -340,6 +359,18 @@ export default function ConsultaTitulos() {
               selected={filterAtrasos}
               onChange={(v) => { setFilterAtrasos(v); goToPage(1) }}
               placeholder="Situação"
+            />
+            <MultiSelectDropdown
+              options={INADIMPLENCIA_OPTIONS}
+              selected={filterInadimplencias}
+              onChange={(v) => { setFilterInadimplencias(v); goToPage(1) }}
+              placeholder="Inadimplência"
+            />
+            <MultiSelectDropdown
+              options={MOTIVO_OPTIONS}
+              selected={filterMotivos}
+              onChange={(v) => { setFilterMotivos(v); goToPage(1) }}
+              placeholder="Motivo"
             />
             <Select value={filterFaixa} onChange={(e) => { setFilterFaixa(e.target.value); goToPage(1) }}>
               {FAIXA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

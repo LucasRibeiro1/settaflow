@@ -260,8 +260,11 @@ export function computeDashboard(clientes, titulos) {
   const todosDevedores   = devedoresOrdenados
 
   // API já retorna SALDO negativo para tipos IS-/IN-, soma direta
-  const saldoTotalAberto  = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
-  const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalAberto   = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalVencido  = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalJuridico = titulosVencidos
+    .filter((t) => t.inadimplencia === '3')
+    .reduce((s, t) => s + t.saldoAtual, 0)
 
   // Composição da carteira: vencido vs em dia
   const composicaoCarteira = [
@@ -315,6 +318,7 @@ export function computeDashboard(clientes, titulos) {
       valorTotalAberto,
       saldoTotalAberto,
       saldoTotalVencido,
+      saldoTotalJuridico,
       totalTitulosVencidos: titulosVencidos.length,
       clientesSemContatoMais30Dias: clientesComAtraso.filter((c) => c.maiorAtraso > 30).length,
       promessasPendentes: 0,
