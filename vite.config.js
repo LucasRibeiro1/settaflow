@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/rest': {
-        target: 'http://177.85.6.66:8089',
+        target: 'http://177.85.6.66:8091',
         changeOrigin: true,
         secure: false,
       },
