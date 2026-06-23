@@ -127,7 +127,7 @@ export function mapTitulo(raw, clienteMap) {
   const parcela = String(raw.PARCELA ?? raw.parcela ?? '').trim()
 
   return {
-    id: `${empresa}-${numero}-${codcli}-${loja}-${raw.VENCIMENTO ?? raw.DTVENCTO ?? ''}`,
+    id: `${empresa}-${prefixo}-${numero}-${parcela}-${codcli}-${loja}-${raw.VENCIMENTO ?? raw.DTVENCTO ?? ''}`,
     filial: empresa,
     clienteId: clienteKey,
     clienteCodigo: codcli,
