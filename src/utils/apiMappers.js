@@ -199,7 +199,7 @@ export function enrichClientesWithTitulos(clientes, titulos) {
   // Calcula atrasoMedio (prazo médio ponderado) e deriva statusCobranca
   for (const [, c] of map) {
     c.atrasoMedio = c.somaValorVencido > 0
-      ? Math.round(c.somaValorDiasAtraso / c.somaValorVencido)
+      ? parseFloat((c.somaValorDiasAtraso / c.somaValorVencido * 100).toFixed(2))
       : 0
     if (c.risco === 'D' || c.maiorAtraso > 180) c.statusCobranca = 'sem_acordo'
     else if (c.maiorAtraso > 0) c.statusCobranca = 'em_cobranca'

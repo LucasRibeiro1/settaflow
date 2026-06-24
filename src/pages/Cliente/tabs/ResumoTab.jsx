@@ -45,25 +45,12 @@ export function ResumoTab({ cliente }) {
           </span>
         </div>
 
-        {/* Prazo Médio de Atraso Ponderado */}
-        <div className={`resumo-kpi ${atrasoMedio > 90 ? 'resumo-kpi-danger' : atrasoMedio > 30 ? 'resumo-kpi-warning' : 'resumo-kpi-info'}`}>
-          <span className="resumo-kpi-label">Prazo Médio de Atraso</span>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-            <span className="resumo-kpi-value">{atrasoMedio} dias</span>
-            <div className="resumo-progress-bar-wrap">
-              <div
-                className="resumo-progress-bar"
-                style={{
-                  width: `${Math.min((atrasoMedio / 365) * 100, 100)}%`,
-                  background: atrasoMedio > 90
-                    ? 'var(--danger)'
-                    : atrasoMedio > 30
-                      ? 'var(--warning)'
-                      : 'var(--success)',
-                }}
-              />
-            </div>
-          </div>
+        {/* Índice de Atraso Ponderado */}
+        <div className={`resumo-kpi ${atrasoMedio > 9000 ? 'resumo-kpi-danger' : atrasoMedio > 3000 ? 'resumo-kpi-warning' : 'resumo-kpi-info'}`}>
+          <span className="resumo-kpi-label">Índice de Atraso Ponderado</span>
+          <span className="resumo-kpi-value">
+            {atrasoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+          </span>
           <span className="resumo-kpi-sub">
             Saldo em atraso: {formatCurrency(somaValorVencido)}
           </span>
@@ -74,13 +61,14 @@ export function ResumoTab({ cliente }) {
           <span className="resumo-kpi-label">Fórmula Aplicada</span>
           <div className="formula-block">
             <span className="formula-text">
-              Prazo Médio = <span className="formula-num">Σ (Valor × Dias de Atraso)</span>
+              % = <span className="formula-num">Σ (Valor × Dias de Atraso)</span>
               <span className="formula-div"> / </span>
               <span className="formula-den">Σ (Valor dos Títulos em Atraso)</span>
+              <span> × 100</span>
             </span>
             <div className="formula-calc">
-              = {somaValorDiasAtraso.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} / {formatCurrency(somaValorVencido)}
-              = <strong>{atrasoMedio} dias</strong>
+              = {somaValorDiasAtraso.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} / {formatCurrency(somaValorVencido)} × 100
+              = <strong>{atrasoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</strong>
             </div>
           </div>
         </div>
