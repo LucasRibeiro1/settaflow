@@ -47,7 +47,7 @@ export default function Carteira() {
   const [search, setSearch] = useState('')
   const [codigoCliente, setCodigoCliente] = useState('')
   const [filters, setFilters] = useState({ status: '', responsavel: '', regiao: '', grupo: '' })
-  const [sortField, setSortField] = useState('atrasoMedio')
+  const [sortField, setSortField] = useState('maiorAtraso')
   const [sortDir, setSortDir] = useState('desc')
 
   const debouncedSearch = useDebounce(search, 350)
@@ -201,7 +201,7 @@ export default function Carteira() {
                       <th>Responsável</th>
                       <th onClick={() => handleSort('valorTotalAberto')}>Valor Aberto {sortIcon('valorTotalAberto')}</th>
                       <th onClick={() => handleSort('qtdTitulosVencidos')}>Títulos {sortIcon('qtdTitulosVencidos')}</th>
-                      <th onClick={() => handleSort('atrasoMedio')}>Prazo Médio {sortIcon('atrasoMedio')}</th>
+                      <th onClick={() => handleSort('maiorAtraso')}>Maior Atraso {sortIcon('maiorAtraso')}</th>
                       <th onClick={() => handleSort('ultimoContato')}>Último Contato {sortIcon('ultimoContato')}</th>
                       <th>Próxima Ação</th>
                       <th onClick={() => handleSort('statusCobranca')}>Status {sortIcon('statusCobranca')}</th>
@@ -224,8 +224,8 @@ export default function Carteira() {
                         <td className="td-valor">{formatCurrency(c.valorTotalAberto)}</td>
                         <td className="td-center">{c.qtdTitulosVencidos}</td>
                         <td>
-                          <Badge type={c.atrasoMedio > 120 ? 'danger' : c.atrasoMedio > 60 ? 'warning' : 'info'}>
-                            {c.atrasoMedio}d
+                          <Badge type={c.maiorAtraso > 120 ? 'danger' : c.maiorAtraso > 60 ? 'warning' : 'info'}>
+                            {c.maiorAtraso}d
                           </Badge>
                         </td>
                         <td className="text-secondary">{formatDate(c.ultimoContato)}</td>
