@@ -1,22 +1,13 @@
 import protheusApi from './protheusApi'
-import axios from 'axios'
 import { mockAcordos } from '../mocks/acordos'
 
 const USE_MOCK = false
 
-const POST_URL = '/rest/STWS022P'          // gravação  (porta 8091)
-const GET_URL  = '/acordos/STWS022G/listar' // consulta (porta 8089, via proxy /acordos)
+const POST_URL = '/rest/STWS022P'           // gravação  (porta 8091)
+const GET_URL  = '/rest/STWS022G/listar'    // consulta  (porta 8091)
 
 let mockData = [...mockAcordos]
 let nextId = mockData.length + 1
-
-// Instância separada para a porta 8089 (acordos GET)
-const acordosApi = axios.create({
-  baseURL: import.meta.env.VITE_PROTHEUS_URL_ACORDOS || '',
-  timeout: 20000,
-  headers: { 'Content-Type': 'application/json' },
-  auth: { username: 'API', password: 's&tt@' },
-})
 
 // Converte data ISO (YYYY-MM-DD) para DD/MM/YYYY (caractere)
 function toProtheusDate(isoStr) {
@@ -86,6 +77,7 @@ function fromProtheusRecord(raw) {
 }
 
 export const acordoService = {
+  // Busca todos os acordos de todos os clientes (range 000000-999999)
   async getAcordos(params = {}) {
     if (USE_MOCK) {
       let result = [...mockData]
@@ -93,14 +85,24 @@ export const acordoService = {
       if (params.status) result = result.filter((a) => a.status === params.status)
       return result
     }
-    // API exige CodCli — sem ele não faz a chamada
-    if (!params.clienteId) return []
-    const clienteIdStr = String(params.clienteId)
+    const { data } = await protheusApi.get(GET_URL, {
+      params: { CodCli1: '000000', CodCli2: '999999', Loja1: '00', Loja2: '99' },
+    })
+    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
+    return lista.map(fromProtheusRecord)
+  },
+
+  // Busca acordos de um cliente específico (CodCli1=CodCli2=mesmo código)
+  async getAcordosCliente(clienteId) {
+    if (USE_MOCK) {
+      return mockData.filter((a) => String(a.clienteId) === String(clienteId))
+    }
+    const clienteIdStr = String(clienteId)
     const dashIdx = clienteIdStr.lastIndexOf('-')
     const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
     const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
-    const { data } = await acordosApi.get(GET_URL, {
-      params: { CodCli: codcli, Loja: loja },
+    const { data } = await protheusApi.get(GET_URL, {
+      params: { CodCli1: codcli, CodCli2: codcli, Loja1: loja, Loja2: loja },
     })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)

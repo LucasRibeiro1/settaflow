@@ -25,7 +25,7 @@ export function AcordosTab({ clienteId, cliente }) {
   const [saving, setSaving] = useState(false)
 
   const { data: acordos, loading, refetch } = useApi(
-    () => acordoService.getAcordos({ clienteId }),
+    () => acordoService.getAcordosCliente(clienteId),
     [clienteId]
   )
 
