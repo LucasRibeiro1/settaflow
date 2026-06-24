@@ -93,7 +93,9 @@ export const acordoService = {
       if (params.status) result = result.filter((a) => a.status === params.status)
       return result
     }
-    const clienteIdStr = String(params.clienteId || '')
+    // API exige CodCli — sem ele não faz a chamada
+    if (!params.clienteId) return []
+    const clienteIdStr = String(params.clienteId)
     const dashIdx = clienteIdStr.lastIndexOf('-')
     const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
     const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'

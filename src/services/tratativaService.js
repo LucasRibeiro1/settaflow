@@ -92,6 +92,8 @@ export const tratativaService = {
       result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
       return result
     }
+    // API exige CodCli — sem ele não faz a chamada
+    if (!params.clienteId && !params.codcli) return []
     const { data } = await protheusApi.get(GET_URL, { params })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)
