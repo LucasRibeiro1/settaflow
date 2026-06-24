@@ -72,8 +72,8 @@ export default function ClienteDetalhe() {
             <span className="kpi-value">{cliente.qtdTitulosVencidos}</span>
           </div>
           <div className="cliente-kpi">
-            <span className="kpi-label">Maior Atraso</span>
-            <span className="kpi-value kpi-danger">{cliente.maiorAtraso} dias</span>
+            <span className="kpi-label">Prazo Médio</span>
+            <span className="kpi-value kpi-danger">{cliente.atrasoMedio} dias</span>
           </div>
           <div className="cliente-kpi">
             <span className="kpi-label">Último Pagamento</span>
