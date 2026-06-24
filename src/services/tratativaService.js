@@ -8,7 +8,12 @@ const BASE_URL = '/rest/STWS021P'
 let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
 
-// Converte data ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:MM...) para AAAAMMDD
+// Converte data ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:MM...) para AAAAMMDD (caractere)
+function toProtheusDate(isoStr) {
+  if (!isoStr) return ''
+  const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return match ? `${match[1]}${match[2]}${match[3]}` : ''
+}
 
 function uuid() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -31,12 +36,12 @@ function toProtheusPayload(payload) {
     cNUM:    payload.id || uuid(),
     cCODCLI: payload.clienteCodigo || (dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr),
     cLOJA:   loja,
-    dDATA:   dataHora.toISOString().split('T')[0],
+    dDATA:   toProtheusDate(dataHora.toISOString()),
     cTPCONT: payload.tipoContato || '',
     cSTATUS: payload.status || '',
     cOBS:    payload.observacao || '',
     cPROXAC: payload.proximaAcao || '',
-    dDTPROX: payload.dataProximaAcao || '',
+    dDTPROX: toProtheusDate(payload.dataProximaAcao),
     cANEXOS: payload.anexos?.length ? JSON.stringify(payload.anexos) : '',
   }
 }
