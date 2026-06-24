@@ -1,8 +1,7 @@
 import protheusApi from './protheusApi'
 import { mockAcordos } from '../mocks/acordos'
 
-// Mude para false quando os endpoints Protheus (STWS022) estiverem disponíveis
-const USE_MOCK = true
+const USE_MOCK = false
 
 const BASE_URL = '/rest/STWS022P'
 
@@ -82,10 +81,10 @@ export const acordoService = {
       return result
     }
     const [codcli, loja = '01'] = String(params.clienteId || '').split('-')
-    const { data } = await protheusApi.get(`${BASE_URL}/listar`, {
+    const { data } = await protheusApi.get(BASE_URL, {
       params: { codcli, loja, status: params.status || '' },
     })
-    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || [])
+    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)
   },
 
@@ -103,8 +102,8 @@ export const acordoService = {
       return novo
     }
     const body = toProtheusPayload(payload)
-    const { data } = await protheusApi.post(`${BASE_URL}/gravar`, body)
-    return fromProtheusRecord(data)
+    const { data } = await protheusApi.post(BASE_URL, body)
+    return data
   },
 
   // PUT → atualiza status do acordo em ZAC010
@@ -114,7 +113,7 @@ export const acordoService = {
       return mockData.find((a) => String(a.id) === String(id))
     }
     const body = { ZAC_NUM: id, ZAC_STATUS: payload.status }
-    const { data } = await protheusApi.post(`${BASE_URL}/atualizar`, body)
-    return fromProtheusRecord(data)
+    const { data } = await protheusApi.put(BASE_URL, body)
+    return data
   },
 }

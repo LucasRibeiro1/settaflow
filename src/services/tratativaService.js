@@ -1,8 +1,7 @@
 import protheusApi from './protheusApi'
 import { mockTratativas } from '../mocks/tratativas'
 
-// Mude para false quando os endpoints Protheus (STWS021) estiverem disponíveis
-const USE_MOCK = true
+const USE_MOCK = false
 
 const BASE_URL = '/rest/STWS021P'
 
@@ -99,8 +98,8 @@ export const tratativaService = {
         .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
     }
     const [codcli, loja = '01'] = String(clienteId).split('-')
-    const { data } = await protheusApi.get(`${BASE_URL}/listar`, { params: { codcli, loja } })
-    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || [])
+    const { data } = await protheusApi.get(BASE_URL, { params: { codcli, loja } })
+    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista
       .map(fromProtheusRecord)
       .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
@@ -114,8 +113,8 @@ export const tratativaService = {
       return nova
     }
     const body = toProtheusPayload(payload)
-    const { data } = await protheusApi.post(`${BASE_URL}/gravar`, body)
-    return fromProtheusRecord(data)
+    const { data } = await protheusApi.post(BASE_URL, body)
+    return data
   },
 
   async updateTratativa(id, payload) {
@@ -123,8 +122,8 @@ export const tratativaService = {
       mockData = mockData.map((t) => (t.id === id || t.id === Number(id) ? { ...t, ...payload } : t))
       return mockData.find((t) => t.id === id || t.id === Number(id))
     }
-    const { data } = await protheusApi.put(`${BASE_URL}/atualizar`, { ZTR_ID: id, ...payload })
-    return fromProtheusRecord(data)
+    const { data } = await protheusApi.put(BASE_URL, { ZTR_ID: id, ...payload })
+    return data
   },
 
   async deleteTratativa(id) {
@@ -132,7 +131,7 @@ export const tratativaService = {
       mockData = mockData.filter((t) => t.id !== id && t.id !== Number(id))
       return { success: true }
     }
-    await protheusApi.delete(`${BASE_URL}/excluir`, { data: { ZTR_ID: id } })
+    await protheusApi.delete(BASE_URL, { data: { ZTR_ID: id } })
     return { success: true }
   },
 }
