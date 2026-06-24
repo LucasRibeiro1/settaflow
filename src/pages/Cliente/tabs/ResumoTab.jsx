@@ -63,11 +63,10 @@ export function ResumoTab({ cliente }) {
             <span className="formula-text">
               % = <span className="formula-num">Σ (Valor × Dias de Atraso)</span>
               <span className="formula-div"> / </span>
-              <span className="formula-den">Σ (Valor dos Títulos em Atraso)</span>
-              <span> × 100</span>
+              <span className="formula-den">(Σ Valor em Atraso × 100)</span>
             </span>
             <div className="formula-calc">
-              = {somaValorDiasAtraso.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} / {formatCurrency(somaValorVencido)} × 100
+              = {somaValorDiasAtraso.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} / ({formatCurrency(somaValorVencido)} × 100)
               = <strong>{atrasoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</strong>
             </div>
           </div>
