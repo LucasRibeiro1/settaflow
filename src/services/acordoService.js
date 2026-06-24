@@ -1,17 +1,39 @@
 import protheusApi from './protheusApi'
+import axios from 'axios'
 import { mockAcordos } from '../mocks/acordos'
 
 const USE_MOCK = false
 
-const BASE_URL = '/rest/STWS022P'
+const POST_URL = '/rest/STWS022P'          // gravação  (porta 8091)
+const GET_URL  = '/acordos/STWS022G/listar' // consulta (porta 8089, via proxy /acordos)
 
 let mockData = [...mockAcordos]
 let nextId = mockData.length + 1
 
+// Instância separada para a porta 8089 (acordos GET)
+const acordosApi = axios.create({
+  baseURL: import.meta.env.VITE_PROTHEUS_URL_ACORDOS || '',
+  timeout: 20000,
+  headers: { 'Content-Type': 'application/json' },
+  auth: { username: 'API', password: 's&tt@' },
+})
+
+// Converte data ISO (YYYY-MM-DD) para DD/MM/YYYY (caractere)
 function toProtheusDate(isoStr) {
   if (!isoStr) return ''
   const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
-  return match ? `${match[1]}${match[2]}${match[3]}` : ''
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : ''
+}
+
+// Converte DD/MM/YYYY ou YYYYMMDD recebido da API para ISO YYYY-MM-DD
+function parseProtheusDate(raw) {
+  if (!raw) return null
+  const s = String(raw).trim()
+  const dmy = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`
+  const ymd = s.match(/^(\d{4})(\d{2})(\d{2})$/)
+  if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`
+  return null
 }
 
 function uuid() {
@@ -23,52 +45,43 @@ function uuid() {
     })
 }
 
-// Monta o payload no formato da tabela ZAC010
+// Monta o payload no formato esperado pela API STWS022P
 function toProtheusPayload(payload) {
-  const [codcli, loja = '01'] = String(payload.clienteId || '').split('-')
-  const vlneg = parseFloat(payload.valorNegociado) || 0
+  const clienteIdStr = String(payload.clienteId || '')
+  const dashIdx = clienteIdStr.lastIndexOf('-')
+  const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
+  const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
+  const vlneg  = parseFloat(payload.valorNegociado) || 0
   const qtparc = parseInt(payload.qtdParcelas) || 1
   const vlparc = qtparc > 0 ? parseFloat((vlneg / qtparc).toFixed(2)) : 0
 
   return {
-    ZAC_FILIAL: payload.filial || '0201',
-    ZAC_NUM: payload.id || uuid(),
-    ZAC_CODCLI: codcli || '',
-    ZAC_LOJA: loja,
-    ZAC_NOMCLI: payload.clienteNome || '',
-    ZAC_USUARIO: payload.usuario || '',
-    ZAC_DATA: toProtheusDate(payload.dataAcordo),
-    ZAC_VALOR: vlneg,
-    ZAC_QTPARC: qtparc,
-    ZAC_VLPARC: vlparc,
-    ZAC_DTVPRO: toProtheusDate(payload.vencimentoPrimeiraParcela),
-    ZAC_STATUS: payload.status || 'em_aberto',
-    ZAC_OBS: payload.observacoes || '',
+    cNUM:    payload.id || uuid(),
+    cCODCLI: payload.clienteCodigo || codcli,
+    cLOJA:   loja,
+    dDATA:   toProtheusDate(payload.dataAcordo),
+    nVALOR:  vlneg,
+    nQTPARC: qtparc,
+    nVLPARC: vlparc,
+    dDTVPRO: toProtheusDate(payload.vencimentoPrimeiraParcela),
+    cSTATUS: payload.status || 'em_aberto',
+    cOBS:    payload.observacoes || '',
   }
 }
 
-// Mapeia registro ZAC010 → formato interno do app
+// Mapeia retorno da API STWS022G → formato interno do app
 function fromProtheusRecord(raw) {
-  const d = String(raw.ZAC_DATA || '')
-  const p = String(raw.ZAC_DTVPRO || '')
-
   return {
-    id: raw.ZAC_NUM,
-    clienteId: `${String(raw.ZAC_CODCLI).trim()}-${String(raw.ZAC_LOJA).trim()}`,
-    clienteCodigo: raw.ZAC_CODCLI,
-    clienteNome: raw.ZAC_NOMCLI,
-    usuario: raw.ZAC_USUARIO,
-    dataAcordo: d.length === 8
-      ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
-      : null,
-    valorNegociado: parseFloat(raw.ZAC_VALOR) || 0,
-    qtdParcelas: parseInt(raw.ZAC_QTPARC) || 0,
-    valorParcela: parseFloat(raw.ZAC_VLPARC) || 0,
-    vencimentoPrimeiraParcela: p.length === 8
-      ? `${p.slice(0, 4)}-${p.slice(4, 6)}-${p.slice(6, 8)}`
-      : null,
-    status: raw.ZAC_STATUS,
-    observacoes: raw.ZAC_OBS,
+    id: raw.cNUM,
+    clienteId: `${String(raw.cCODCLI || '').trim()}-${String(raw.cLOJA || '').trim()}`,
+    clienteCodigo: String(raw.cCODCLI || '').trim(),
+    dataAcordo: parseProtheusDate(raw.dDATA),
+    valorNegociado: parseFloat(raw.nVALOR) || 0,
+    qtdParcelas: parseInt(raw.nQTPARC) || 0,
+    valorParcela: parseFloat(raw.nVLPARC) || 0,
+    vencimentoPrimeiraParcela: parseProtheusDate(raw.dDTVPRO),
+    status: raw.cSTATUS || '',
+    observacoes: raw.cOBS || '',
   }
 }
 
@@ -80,40 +93,37 @@ export const acordoService = {
       if (params.status) result = result.filter((a) => a.status === params.status)
       return result
     }
-    const [codcli, loja = '01'] = String(params.clienteId || '').split('-')
-    const { data } = await protheusApi.get(BASE_URL, {
-      params: { codcli, loja, status: params.status || '' },
+    const clienteIdStr = String(params.clienteId || '')
+    const dashIdx = clienteIdStr.lastIndexOf('-')
+    const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
+    const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
+    const { data } = await acordosApi.get(GET_URL, {
+      params: { CodCli: codcli, Loja: loja },
     })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)
   },
 
-  // POST → ZAC010
   async createAcordo(payload) {
     if (USE_MOCK) {
-      const vlneg = parseFloat(payload.valorNegociado) || 0
+      const vlneg  = parseFloat(payload.valorNegociado) || 0
       const qtparc = parseInt(payload.qtdParcelas) || 1
-      const novo = {
-        id: nextId++,
-        ...payload,
-        valorParcela: parseFloat((vlneg / qtparc).toFixed(2)),
-      }
+      const novo   = { id: nextId++, ...payload, valorParcela: parseFloat((vlneg / qtparc).toFixed(2)) }
       mockData = [novo, ...mockData]
       return novo
     }
     const body = toProtheusPayload(payload)
-    const { data } = await protheusApi.post(BASE_URL, body)
+    const { data } = await protheusApi.post(POST_URL, body)
     return data
   },
 
-  // PUT → atualiza status do acordo em ZAC010
   async updateAcordo(id, payload) {
     if (USE_MOCK) {
       mockData = mockData.map((a) => (String(a.id) === String(id) ? { ...a, ...payload } : a))
       return mockData.find((a) => String(a.id) === String(id))
     }
-    const body = { ZAC_NUM: id, ZAC_STATUS: payload.status }
-    const { data } = await protheusApi.put(BASE_URL, body)
+    const body = { cNUM: id, cSTATUS: payload.status }
+    const { data } = await protheusApi.put(POST_URL, body)
     return data
   },
 }

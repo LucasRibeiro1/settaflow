@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/acordos/:path*",
+      "destination": "http://177.85.6.66:8089/rest/:path*"
+    },
+    {
       "source": "/rest/:path*",
       "destination": "http://177.85.6.66:8091/rest/:path*"
     }
