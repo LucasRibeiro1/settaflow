@@ -89,7 +89,7 @@ export function TratativasTab({ clienteId, cliente }) {
     try {
       const payload = {
         ...form,
-        clienteId: Number(clienteId),
+        clienteId: clienteId,
         clienteNome: cliente.razaoSocial,
         clienteCodigo: cliente.codigo,
         usuario: 'Ana Costa',

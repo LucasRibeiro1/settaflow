@@ -9,11 +9,6 @@ let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
 
 // Converte data ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:MM...) para AAAAMMDD
-function toProtheusDate(isoStr) {
-  if (!isoStr) return ''
-  const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
-  return match ? `${match[1]}${match[2]}${match[3]}` : ''
-}
 
 function uuid() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
@@ -26,20 +21,23 @@ function uuid() {
 
 // Monta o payload no formato da tabela ZTR010
 function toProtheusPayload(payload) {
-  const [codcli, loja = '01'] = String(payload.clienteId || '').split('-')
+  // clienteId formato interno: 'CODCLI-LOJA' ex: '001947-01'
+  const clienteIdStr = String(payload.clienteId || '')
+  const dashIdx = clienteIdStr.lastIndexOf('-')
+  const loja = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
   const dataHora = payload.dataHora ? new Date(payload.dataHora) : new Date()
 
   return {
-    cNUM:     payload.id || uuid(),
-    cCODCLI:  codcli || '',
-    cLOJA:    loja,
-    dDATA:    toProtheusDate(dataHora.toISOString()),
-    cTPCONT:  payload.tipoContato || '',
-    cSTATUS:  payload.status || '',
-    cOBS:     payload.observacao || '',
-    cPROXAC:  payload.proximaAcao || '',
-    dDTPROX:  toProtheusDate(payload.dataProximaAcao),
-    cANEXOS:  payload.anexos?.length ? JSON.stringify(payload.anexos) : '',
+    cNUM:    payload.id || uuid(),
+    cCODCLI: payload.clienteCodigo || (dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr),
+    cLOJA:   loja,
+    dDATA:   dataHora.toISOString().split('T')[0],
+    cTPCONT: payload.tipoContato || '',
+    cSTATUS: payload.status || '',
+    cOBS:    payload.observacao || '',
+    cPROXAC: payload.proximaAcao || '',
+    dDTPROX: payload.dataProximaAcao || '',
+    cANEXOS: payload.anexos?.length ? JSON.stringify(payload.anexos) : '',
   }
 }
 
