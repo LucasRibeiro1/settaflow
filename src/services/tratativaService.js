@@ -3,8 +3,8 @@ import { mockTratativas } from '../mocks/tratativas'
 
 const USE_MOCK = false
 
-const POST_URL = '/rest/STWS021P'  // gravação
-const GET_URL  = '/rest/STWS021G'  // consulta
+const POST_URL = '/rest/STWS021P'         // gravação
+const GET_URL  = '/rest/STWS021G/listar'  // consulta
 
 let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
@@ -107,7 +107,7 @@ export const tratativaService = {
     const dashIdx = clienteIdStr.lastIndexOf('-')
     const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
     const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
-    const { data } = await protheusApi.get(GET_URL, { params: { codcli, loja } })
+    const { data } = await protheusApi.get(GET_URL, { params: { CodCli: codcli, Loja: loja } })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista
       .map(fromProtheusRecord)
