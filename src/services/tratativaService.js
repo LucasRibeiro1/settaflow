@@ -30,20 +30,16 @@ function toProtheusPayload(payload) {
   const dataHora = payload.dataHora ? new Date(payload.dataHora) : new Date()
 
   return {
-    ZTR_FILIAL: payload.filial || '0201',
-    ZTR_ID: payload.id || uuid(),
-    ZTR_CODCLI: codcli || '',
-    ZTR_LOJA: loja,
-    ZTR_NOMCLI: payload.clienteNome || '',
-    ZTR_USUARIO: payload.usuario || '',
-    ZTR_DATA: toProtheusDate(dataHora.toISOString()),
-    ZTR_HORA: dataHora.toTimeString().slice(0, 8),
-    ZTR_TPCONT: payload.tipoContato || '',
-    ZTR_STATUS: payload.status || '',
-    ZTR_OBS: payload.observacao || '',
-    ZTR_PROXAC: payload.proximaAcao || '',
-    ZTR_DTPROX: toProtheusDate(payload.dataProximaAcao),
-    ZTR_ANEXOS: payload.anexos?.length ? JSON.stringify(payload.anexos) : null,
+    cNUM:     payload.id || uuid(),
+    cCODCLI:  codcli || '',
+    cLOJA:    loja,
+    dDATA:    toProtheusDate(dataHora.toISOString()),
+    cTPCONT:  payload.tipoContato || '',
+    cSTATUS:  payload.status || '',
+    cOBS:     payload.observacao || '',
+    cPROXAC:  payload.proximaAcao || '',
+    dDTPROX:  toProtheusDate(payload.dataProximaAcao),
+    cANEXOS:  payload.anexos?.length ? JSON.stringify(payload.anexos) : '',
   }
 }
 
