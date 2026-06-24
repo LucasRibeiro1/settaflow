@@ -83,6 +83,7 @@ function fromProtheusRecord(raw) {
 }
 
 export const tratativaService = {
+  // Busca todas as tratativas de todos os clientes (range 000000-999999)
   async getTratativas(params = {}) {
     if (USE_MOCK) {
       let result = [...mockData]
@@ -92,13 +93,14 @@ export const tratativaService = {
       result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
       return result
     }
-    // API exige CodCli — sem ele não faz a chamada
-    if (!params.clienteId && !params.codcli) return []
-    const { data } = await protheusApi.get(GET_URL, { params })
+    const { data } = await protheusApi.get(GET_URL, {
+      params: { CodCli1: '000000', CodCli2: '999999', Loja1: '00', Loja2: '99' },
+    })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)
   },
 
+  // Busca tratativas de um cliente específico (CodCli1=CodCli2=mesmo código)
   async getTratativasCliente(clienteId) {
     if (USE_MOCK) {
       return mockData
@@ -109,7 +111,9 @@ export const tratativaService = {
     const dashIdx = clienteIdStr.lastIndexOf('-')
     const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
     const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
-    const { data } = await protheusApi.get(GET_URL, { params: { CodCli: codcli, Loja: loja } })
+    const { data } = await protheusApi.get(GET_URL, {
+      params: { CodCli1: codcli, CodCli2: codcli, Loja1: loja, Loja2: loja },
+    })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista
       .map(fromProtheusRecord)

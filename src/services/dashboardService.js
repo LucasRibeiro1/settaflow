@@ -38,26 +38,19 @@ export const dashboardService = {
     return computeDashboard(clientes, titulos)
   },
 
-  // Fila de cobrança: clientes cuja próxima ação (DTPROX) bate com hoje
+  // Fila de cobrança: tratativas com DTPROX = hoje (busca global com range de clientes)
   async getFilaTrabalho() {
     const hoje = todayStr()
 
-    // Busca a lista de clientes inadimplentes para ter os IDs disponíveis
-    const clientes = await clienteService.getClientesEnriched()
+    const [tratativas, clientes] = await Promise.all([
+      tratativaService.getTratativas(),
+      clienteService.getClientesEnriched(),
+    ])
 
-    // A API de tratativas exige CodCli — busca em paralelo para todos os clientes
-    const resultados = await Promise.allSettled(
-      clientes.map((c) => tratativaService.getTratativasCliente(c.id))
-    )
-
-    const todasTratativas = resultados.flatMap((r) =>
-      r.status === 'fulfilled' ? r.value : []
-    )
-
-    const hojeTratativas = todasTratativas.filter((t) => t.dataProximaAcao === hoje)
+    const hojeTratativas = tratativas.filter((t) => t.dataProximaAcao === hoje)
     if (!hojeTratativas.length) return []
 
-    // Mapa de clientes por id e por código
+    // Mapa de clientes por id e por código para enriquecer com dados financeiros
     const clienteMap = {}
     for (const c of clientes) {
       clienteMap[c.id] = c
