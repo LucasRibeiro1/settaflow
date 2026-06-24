@@ -8,11 +8,11 @@ const BASE_URL = '/rest/STWS021P'
 let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
 
-// Converte data ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:MM...) para AAAAMMDD (caractere)
+// Converte data ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:MM...) para DD/MM/YYYY (caractere)
 function toProtheusDate(isoStr) {
   if (!isoStr) return ''
   const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
-  return match ? `${match[1]}${match[2]}${match[3]}` : ''
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : ''
 }
 
 function uuid() {
@@ -85,8 +85,8 @@ export const tratativaService = {
       result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
       return result
     }
-    const { data } = await protheusApi.get(`${BASE_URL}/listar`, { params })
-    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || [])
+    const { data } = await protheusApi.get(BASE_URL, { params })
+    const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)
   },
 
