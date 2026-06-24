@@ -20,12 +20,9 @@ export function ResumoTab({ cliente }) {
   const [saving, setSaving] = useState(false)
 
   const saldoDisponivel = cliente.limiteCredito - cliente.valorTotalAberto
-  const percentualPagoEmDia =
-    cliente.percAdimplencia > 0
-      ? parseFloat(cliente.percAdimplencia).toFixed(1)
-      : cliente.valorTotalEmitido > 0
-        ? ((cliente.valorPagoEmDia / cliente.valorTotalEmitido) * 100).toFixed(1)
-        : '0.0'
+  const atrasoMedio = cliente.atrasoMedio ?? 0
+  const somaValorVencido = cliente.somaValorVencido ?? 0
+  const somaValorDiasAtraso = cliente.somaValorDiasAtraso ?? 0
 
   const handleSaveObs = async () => {
     setSaving(true)
@@ -48,27 +45,27 @@ export function ResumoTab({ cliente }) {
           </span>
         </div>
 
-        {/* % Pago em Dia */}
-        <div className="resumo-kpi resumo-kpi-info">
-          <span className="resumo-kpi-label">% Títulos Pagos em Dia</span>
+        {/* Prazo Médio de Atraso Ponderado */}
+        <div className={`resumo-kpi ${atrasoMedio > 90 ? 'resumo-kpi-danger' : atrasoMedio > 30 ? 'resumo-kpi-warning' : 'resumo-kpi-info'}`}>
+          <span className="resumo-kpi-label">Prazo Médio de Atraso</span>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-            <span className="resumo-kpi-value">{percentualPagoEmDia}%</span>
+            <span className="resumo-kpi-value">{atrasoMedio} dias</span>
             <div className="resumo-progress-bar-wrap">
               <div
                 className="resumo-progress-bar"
                 style={{
-                  width: `${Math.min(parseFloat(percentualPagoEmDia), 100)}%`,
-                  background: parseFloat(percentualPagoEmDia) >= 80
-                    ? 'var(--success)'
-                    : parseFloat(percentualPagoEmDia) >= 60
+                  width: `${Math.min((atrasoMedio / 365) * 100, 100)}%`,
+                  background: atrasoMedio > 90
+                    ? 'var(--danger)'
+                    : atrasoMedio > 30
                       ? 'var(--warning)'
-                      : 'var(--danger)',
+                      : 'var(--success)',
                 }}
               />
             </div>
           </div>
           <span className="resumo-kpi-sub">
-            {formatCurrency(cliente.valorPagoEmDia)} de {formatCurrency(cliente.valorTotalEmitido)} emitidos
+            Saldo em atraso: {formatCurrency(somaValorVencido)}
           </span>
         </div>
 
@@ -77,14 +74,13 @@ export function ResumoTab({ cliente }) {
           <span className="resumo-kpi-label">Fórmula Aplicada</span>
           <div className="formula-block">
             <span className="formula-text">
-              % = <span className="formula-num">Σ Valor Pago em Dia</span>
+              Prazo Médio = <span className="formula-num">Σ (Valor × Dias de Atraso)</span>
               <span className="formula-div"> / </span>
-              <span className="formula-den">Σ Valor Total Emitido</span>
-              <span> × 100</span>
+              <span className="formula-den">Σ (Valor dos Títulos em Atraso)</span>
             </span>
             <div className="formula-calc">
-              = {formatCurrency(cliente.valorPagoEmDia)} / {formatCurrency(cliente.valorTotalEmitido)} × 100
-              = <strong>{percentualPagoEmDia}%</strong>
+              = {somaValorDiasAtraso.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} / {formatCurrency(somaValorVencido)}
+              = <strong>{atrasoMedio} dias</strong>
             </div>
           </div>
         </div>

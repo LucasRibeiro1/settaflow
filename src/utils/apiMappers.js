@@ -169,7 +169,7 @@ export function enrichClientesWithTitulos(clientes, titulos) {
   const map = new Map(
     clientes.map((c) => [
       c.id,
-      { ...c, valorTotalAberto: 0, qtdTitulosVencidos: 0, maiorAtraso: 0, ultimoPagamento: null },
+      { ...c, valorTotalAberto: 0, qtdTitulosVencidos: 0, maiorAtraso: 0, atrasoMedio: 0, somaValorVencido: 0, somaValorDiasAtraso: 0, ultimoPagamento: null },
     ])
   )
 
@@ -188,12 +188,19 @@ export function enrichClientesWithTitulos(clientes, titulos) {
       if (t.isVencido) {
         c.qtdTitulosVencidos += 1
         if (t.diasAtraso > c.maiorAtraso) c.maiorAtraso = t.diasAtraso
+        // Acumuladores para prazo médio ponderado: Σ(saldo × dias) / Σ(saldo em atraso)
+        const saldo = Math.abs(t.saldoAtual)
+        c.somaValorDiasAtraso += saldo * t.diasAtraso
+        c.somaValorVencido    += saldo
       }
     }
   }
 
-  // Deriva statusCobranca a partir do risco e atraso máximo
+  // Calcula atrasoMedio (prazo médio ponderado) e deriva statusCobranca
   for (const [, c] of map) {
+    c.atrasoMedio = c.somaValorVencido > 0
+      ? Math.round(c.somaValorDiasAtraso / c.somaValorVencido)
+      : 0
     if (c.risco === 'D' || c.maiorAtraso > 180) c.statusCobranca = 'sem_acordo'
     else if (c.maiorAtraso > 0) c.statusCobranca = 'em_cobranca'
     else c.statusCobranca = 'em_cobranca'
