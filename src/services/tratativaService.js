@@ -3,7 +3,8 @@ import { mockTratativas } from '../mocks/tratativas'
 
 const USE_MOCK = false
 
-const BASE_URL = '/rest/STWS021P'
+const POST_URL = '/rest/STWS021P'  // gravação
+const GET_URL  = '/rest/STWS021G'  // consulta
 
 let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
@@ -15,6 +16,19 @@ function toProtheusDate(isoStr) {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : ''
 }
 
+// Converte DD/MM/YYYY ou YYYYMMDD recebido da API para ISO YYYY-MM-DD
+function parseProtheusDate(raw) {
+  if (!raw) return null
+  const s = String(raw).trim()
+  // DD/MM/YYYY
+  const dmy = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`
+  // YYYYMMDD
+  const ymd = s.match(/^(\d{4})(\d{2})(\d{2})$/)
+  if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`
+  return null
+}
+
 function uuid() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
@@ -24,9 +38,8 @@ function uuid() {
     })
 }
 
-// Monta o payload no formato da tabela ZTR010
+// Monta o payload no formato esperado pela API STWS021P
 function toProtheusPayload(payload) {
-  // clienteId formato interno: 'CODCLI-LOJA' ex: '001947-01'
   const clienteIdStr = String(payload.clienteId || '')
   const dashIdx = clienteIdStr.lastIndexOf('-')
   const loja = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
@@ -46,30 +59,24 @@ function toProtheusPayload(payload) {
   }
 }
 
-// Mapeia registro ZTR010 → formato interno do app
+// Mapeia retorno da API STWS021G → formato interno do app
 function fromProtheusRecord(raw) {
-  const d = String(raw.ZTR_DATA || '')
-  const h = String(raw.ZTR_HORA || '00:00:00')
-  const p = String(raw.ZTR_DTPROX || '')
+  const dataIso = parseProtheusDate(raw.DATA)
+  const dtproxIso = parseProtheusDate(raw.DTPROX)
 
   return {
-    id: raw.ZTR_ID,
-    clienteId: `${String(raw.ZTR_CODCLI).trim()}-${String(raw.ZTR_LOJA).trim()}`,
-    clienteCodigo: raw.ZTR_CODCLI,
-    clienteNome: raw.ZTR_NOMCLI,
-    usuario: raw.ZTR_USUARIO,
-    dataHora: d.length === 8
-      ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}T${h}`
-      : null,
-    tipoContato: raw.ZTR_TPCONT,
-    status: raw.ZTR_STATUS,
-    observacao: raw.ZTR_OBS,
-    proximaAcao: raw.ZTR_PROXAC,
-    dataProximaAcao: p.length === 8
-      ? `${p.slice(0, 4)}-${p.slice(4, 6)}-${p.slice(6, 8)}`
-      : '',
+    id: raw.Num,
+    clienteId: `${String(raw.CODCLI || '').trim()}-${String(raw.LOJA || '').trim()}`,
+    clienteCodigo: String(raw.CODCLI || '').trim(),
+    usuario: '',
+    dataHora: dataIso ? `${dataIso}T00:00:00` : null,
+    tipoContato: raw.TPCONT || '',
+    status: raw.STATUS || '',
+    observacao: raw.OBS || '',
+    proximaAcao: raw.PROXAC || '',
+    dataProximaAcao: dtproxIso || '',
     anexos: (() => {
-      try { return raw.ZTR_ANEXOS ? JSON.parse(raw.ZTR_ANEXOS) : [] }
+      try { return raw.ANEXOS ? JSON.parse(raw.ANEXOS) : [] }
       catch { return [] }
     })(),
   }
@@ -85,7 +92,7 @@ export const tratativaService = {
       result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
       return result
     }
-    const { data } = await protheusApi.get(BASE_URL, { params })
+    const { data } = await protheusApi.get(GET_URL, { params })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista.map(fromProtheusRecord)
   },
@@ -96,15 +103,17 @@ export const tratativaService = {
         .filter((t) => String(t.clienteId) === String(clienteId))
         .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
     }
-    const [codcli, loja = '01'] = String(clienteId).split('-')
-    const { data } = await protheusApi.get(BASE_URL, { params: { codcli, loja } })
+    const clienteIdStr = String(clienteId)
+    const dashIdx = clienteIdStr.lastIndexOf('-')
+    const codcli = dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr
+    const loja   = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
+    const { data } = await protheusApi.get(GET_URL, { params: { codcli, loja } })
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
     return lista
       .map(fromProtheusRecord)
       .sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
   },
 
-  // POST → ZTR010
   async createTratativa(payload) {
     if (USE_MOCK) {
       const nova = { id: nextId++, ...payload }
@@ -112,7 +121,7 @@ export const tratativaService = {
       return nova
     }
     const body = toProtheusPayload(payload)
-    const { data } = await protheusApi.post(BASE_URL, body)
+    const { data } = await protheusApi.post(POST_URL, body)
     return data
   },
 
@@ -121,7 +130,7 @@ export const tratativaService = {
       mockData = mockData.map((t) => (t.id === id || t.id === Number(id) ? { ...t, ...payload } : t))
       return mockData.find((t) => t.id === id || t.id === Number(id))
     }
-    const { data } = await protheusApi.put(BASE_URL, { ZTR_ID: id, ...payload })
+    const { data } = await protheusApi.put(POST_URL, { cNUM: id, ...payload })
     return data
   },
 
@@ -130,7 +139,7 @@ export const tratativaService = {
       mockData = mockData.filter((t) => t.id !== id && t.id !== Number(id))
       return { success: true }
     }
-    await protheusApi.delete(BASE_URL, { data: { ZTR_ID: id } })
+    await protheusApi.delete(POST_URL, { data: { cNUM: id } })
     return { success: true }
   },
 }
