@@ -4,7 +4,7 @@ import { mockAcordos } from '../mocks/acordos'
 // Mude para false quando os endpoints Protheus (STWS022) estiverem disponíveis
 const USE_MOCK = true
 
-const BASE_URL = '/rest/STWS022'
+const BASE_URL = '/rest/STWS022P'
 
 let mockData = [...mockAcordos]
 let nextId = mockData.length + 1

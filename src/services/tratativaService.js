@@ -4,7 +4,7 @@ import { mockTratativas } from '../mocks/tratativas'
 // Mude para false quando os endpoints Protheus (STWS021) estiverem disponíveis
 const USE_MOCK = true
 
-const BASE_URL = '/rest/STWS021'
+const BASE_URL = '/rest/STWS021P'
 
 let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
@@ -20,9 +20,9 @@ function uuid() {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0
-        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
-      })
+      const r = (Math.random() * 16) | 0
+      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+    })
 }
 
 // Monta o payload no formato da tabela ZTR010
@@ -31,44 +31,44 @@ function toProtheusPayload(payload) {
   const dataHora = payload.dataHora ? new Date(payload.dataHora) : new Date()
 
   return {
-    ZTR_FILIAL:  payload.filial          || '0201',
-    ZTR_ID:      payload.id              || uuid(),
-    ZTR_CODCLI:  codcli                  || '',
-    ZTR_LOJA:    loja,
-    ZTR_NOMCLI:  payload.clienteNome     || '',
-    ZTR_USUARIO: payload.usuario         || '',
-    ZTR_DATA:    toProtheusDate(dataHora.toISOString()),
-    ZTR_HORA:    dataHora.toTimeString().slice(0, 8),
-    ZTR_TPCONT:  payload.tipoContato     || '',
-    ZTR_STATUS:  payload.status          || '',
-    ZTR_OBS:     payload.observacao      || '',
-    ZTR_PROXAC:  payload.proximaAcao     || '',
-    ZTR_DTPROX:  toProtheusDate(payload.dataProximaAcao),
-    ZTR_ANEXOS:  payload.anexos?.length ? JSON.stringify(payload.anexos) : null,
+    ZTR_FILIAL: payload.filial || '0201',
+    ZTR_ID: payload.id || uuid(),
+    ZTR_CODCLI: codcli || '',
+    ZTR_LOJA: loja,
+    ZTR_NOMCLI: payload.clienteNome || '',
+    ZTR_USUARIO: payload.usuario || '',
+    ZTR_DATA: toProtheusDate(dataHora.toISOString()),
+    ZTR_HORA: dataHora.toTimeString().slice(0, 8),
+    ZTR_TPCONT: payload.tipoContato || '',
+    ZTR_STATUS: payload.status || '',
+    ZTR_OBS: payload.observacao || '',
+    ZTR_PROXAC: payload.proximaAcao || '',
+    ZTR_DTPROX: toProtheusDate(payload.dataProximaAcao),
+    ZTR_ANEXOS: payload.anexos?.length ? JSON.stringify(payload.anexos) : null,
   }
 }
 
 // Mapeia registro ZTR010 → formato interno do app
 function fromProtheusRecord(raw) {
-  const d = String(raw.ZTR_DATA   || '')
-  const h = String(raw.ZTR_HORA   || '00:00:00')
+  const d = String(raw.ZTR_DATA || '')
+  const h = String(raw.ZTR_HORA || '00:00:00')
   const p = String(raw.ZTR_DTPROX || '')
 
   return {
-    id:              raw.ZTR_ID,
-    clienteId:       `${String(raw.ZTR_CODCLI).trim()}-${String(raw.ZTR_LOJA).trim()}`,
-    clienteCodigo:   raw.ZTR_CODCLI,
-    clienteNome:     raw.ZTR_NOMCLI,
-    usuario:         raw.ZTR_USUARIO,
-    dataHora:        d.length === 8
-      ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${h}`
+    id: raw.ZTR_ID,
+    clienteId: `${String(raw.ZTR_CODCLI).trim()}-${String(raw.ZTR_LOJA).trim()}`,
+    clienteCodigo: raw.ZTR_CODCLI,
+    clienteNome: raw.ZTR_NOMCLI,
+    usuario: raw.ZTR_USUARIO,
+    dataHora: d.length === 8
+      ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}T${h}`
       : null,
-    tipoContato:     raw.ZTR_TPCONT,
-    status:          raw.ZTR_STATUS,
-    observacao:      raw.ZTR_OBS,
-    proximaAcao:     raw.ZTR_PROXAC,
+    tipoContato: raw.ZTR_TPCONT,
+    status: raw.ZTR_STATUS,
+    observacao: raw.ZTR_OBS,
+    proximaAcao: raw.ZTR_PROXAC,
     dataProximaAcao: p.length === 8
-      ? `${p.slice(0,4)}-${p.slice(4,6)}-${p.slice(6,8)}`
+      ? `${p.slice(0, 4)}-${p.slice(4, 6)}-${p.slice(6, 8)}`
       : '',
     anexos: (() => {
       try { return raw.ZTR_ANEXOS ? JSON.parse(raw.ZTR_ANEXOS) : [] }
@@ -82,8 +82,8 @@ export const tratativaService = {
     if (USE_MOCK) {
       let result = [...mockData]
       if (params.clienteId) result = result.filter((t) => String(t.clienteId) === String(params.clienteId))
-      if (params.usuario)   result = result.filter((t) => t.usuario === params.usuario)
-      if (params.status)    result = result.filter((t) => t.status  === params.status)
+      if (params.usuario) result = result.filter((t) => t.usuario === params.usuario)
+      if (params.status) result = result.filter((t) => t.status === params.status)
       result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
       return result
     }
