@@ -55,14 +55,16 @@ export function Sidebar() {
             }
           >
             <span className="sidebar-item-icon">{item.icon}</span>
-            <span className="sidebar-item-label">{item.label}</span>
+            {!sidebarCollapsed && <span className="sidebar-item-label">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="sidebar-avatar">{initials(nomeUsuario)}</div>
+          <div className={`sidebar-avatar ${sidebarCollapsed ? 'sidebar-avatar-center' : ''}`}>
+            {initials(nomeUsuario)}
+          </div>
           {!sidebarCollapsed && (
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">{nomeUsuario}</span>
