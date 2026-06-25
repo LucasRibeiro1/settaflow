@@ -106,6 +106,25 @@ function CustomTooltipCurrency({ active, payload, label }) {
 
 const RANK_PAGE_SIZE = 10
 
+function YAxisNomeTick({ x, y, payload }) {
+  const nome = payload.value || ''
+  const maxChars = 28
+  const linha1 = nome.length > maxChars ? nome.slice(0, maxChars) : nome
+  const linha2 = nome.length > maxChars ? nome.slice(maxChars, maxChars * 2) : null
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={-4} y={0} dy={linha2 ? -5 : 4} textAnchor="end" fill="#94a3b8" fontSize={10}>
+        {linha1}
+      </text>
+      {linha2 && (
+        <text x={-4} y={0} dy={10} textAnchor="end" fill="#94a3b8" fontSize={10}>
+          {linha2}
+        </text>
+      )}
+    </g>
+  )
+}
+
 export default function Dashboard() {
   const { data, loading } = useApi(() => dashboardService.getDashboard())
   const navigate = useNavigate()
@@ -185,8 +204,6 @@ export default function Dashboard() {
     if (v >= 1000) return `R$${(v / 1000).toFixed(0)}k`
     return formatCurrency(v)
   }
-
-  const truncate = (str, n = 18) => str?.length > n ? str.slice(0, n) + '…' : str
 
   return (
     <>
@@ -309,16 +326,16 @@ export default function Dashboard() {
             subtitle="Saldo em aberto por cliente — clique na barra para ver detalhes"
           />
           <div style={{ padding: '0 24px 20px' }}>
-            <ResponsiveContainer width="100%" height={340}>
+            <ResponsiveContainer width="100%" height={380}>
               <BarChart
                 layout="vertical"
-                data={maioresDevedores.map((d) => ({ ...d, nomeAbrev: truncate(d.nome, 28) }))}
-                barSize={22}
-                margin={{ top: 4, right: 80, left: 4, bottom: 4 }}
+                data={maioresDevedores}
+                barSize={24}
+                margin={{ top: 4, right: 80, left: 8, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
                 <XAxis type="number" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <YAxis type="category" dataKey="nomeAbrev" width={200} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                <YAxis type="category" dataKey="nome" width={220} tick={<YAxisNomeTick />} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null

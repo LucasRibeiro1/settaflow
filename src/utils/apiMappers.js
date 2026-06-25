@@ -201,22 +201,20 @@ export function enrichClientesWithTitulos(clientes, titulos) {
     c.atrasoMedio = c.somaValorVencido > 0
       ? parseFloat((c.somaValorDiasAtraso / (c.somaValorVencido * 100)).toFixed(2))
       : 0
-    if (c.risco === 'D' || c.maiorAtraso > 180) c.statusCobranca = 'sem_acordo'
-    else if (c.maiorAtraso > 0) c.statusCobranca = 'em_cobranca'
-    else c.statusCobranca = 'em_cobranca'
+    if (c.maiorAtraso > 180) c.statusCobranca = 'critica'
+    else if (c.maiorAtraso > 90) c.statusCobranca = 'alta'
+    else if (c.maiorAtraso > 30) c.statusCobranca = 'media'
+    else c.statusCobranca = 'baixa'
   }
 
   return Array.from(map.values())
 }
 
 const STATUS_CONFIG = {
-  sem_contato: { label: 'Sem Contato', cor: '#ef4444' },
-  em_cobranca: { label: 'Em Cobrança', cor: '#f59e0b' },
-  negociacao: { label: 'Negociação', cor: '#8b5cf6' },
-  promessa_pagamento: { label: 'Promessa Pgto', cor: '#06b6d4' },
-  aguardando_retorno: { label: 'Aguardando', cor: '#f97316' },
-  acordo_realizado: { label: 'Acordo', cor: '#10b981' },
-  sem_acordo: { label: 'Sem Acordo', cor: '#dc2626' },
+  baixa:   { label: 'Baixo (1-30d)',    cor: '#22c55e' },
+  media:   { label: 'Médio (31-90d)',   cor: '#f59e0b' },
+  alta:    { label: 'Alto (91-180d)',   cor: '#f97316' },
+  critica: { label: 'Crítico (+180d)',  cor: '#dc2626' },
 }
 
 export function computeDashboard(clientes, titulos) {
@@ -265,11 +263,14 @@ export function computeDashboard(clientes, titulos) {
   for (const c of clientesComAtraso) {
     statusCount[c.statusCobranca] = (statusCount[c.statusCobranca] || 0) + 1
   }
-  const clientesPorStatus = Object.entries(statusCount).map(([key, quantidade]) => ({
-    status: STATUS_CONFIG[key]?.label || key,
-    quantidade,
-    cor: STATUS_CONFIG[key]?.cor || '#94a3b8',
-  }))
+  const STATUS_ORDER = ['baixa', 'media', 'alta', 'critica']
+  const clientesPorStatus = STATUS_ORDER
+    .filter((key) => statusCount[key])
+    .map((key) => ({
+      status: STATUS_CONFIG[key].label,
+      quantidade: statusCount[key],
+      cor: STATUS_CONFIG[key].cor,
+    }))
 
   const devedoresOrdenados = [...clientesComAtraso]
     .sort((a, b) => b.valorTotalAberto - a.valorTotalAberto)
