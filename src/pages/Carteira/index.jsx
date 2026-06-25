@@ -8,10 +8,12 @@ import { Input, Select } from '../../components/ui/Input'
 import { Pagination } from '../../components/ui/Pagination'
 import { Breadcrumb } from '../../components/common/Breadcrumb'
 import { SkeletonTable } from '../../components/ui/Skeleton'
+import { Modal } from '../../components/ui/Modal'
 import { useApi } from '../../hooks/useApi'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePagination } from '../../hooks/usePagination'
 import { clienteService } from '../../services/clienteService'
+import { useToast } from '../../context/ToastContext'
 import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS } from '../../utils/formatters'
 import './Carteira.css'
 
@@ -44,11 +46,15 @@ const REGIAO_OPTIONS = [
 
 export default function Carteira() {
   const navigate = useNavigate()
+  const { addToast } = useToast()
   const [search, setSearch] = useState('')
   const [codigoCliente, setCodigoCliente] = useState('')
   const [filters, setFilters] = useState({ status: '', responsavel: '', regiao: '', grupo: '' })
   const [sortField, setSortField] = useState('maiorAtraso')
   const [sortDir, setSortDir] = useState('desc')
+  const [obsModal, setObsModal] = useState({ open: false, cliente: null, text: '' })
+  const [obsSaving, setObsSaving] = useState(false)
+  const [obsOverrides, setObsOverrides] = useState({})
 
   const debouncedSearch = useDebounce(search, 350)
   const debouncedCodigo = useDebounce(codigoCliente, 350)
@@ -129,6 +135,33 @@ export default function Carteira() {
     setFilters({ status: '', responsavel: '', regiao: '', grupo: '' })
   }
 
+  const obsAtual = (c) => obsOverrides[c.id] ?? c.observacoes ?? ''
+
+  const openObsModal = (e, c) => {
+    e.stopPropagation()
+    setObsModal({ open: true, cliente: c, text: obsAtual(c) })
+  }
+
+  const closeObsModal = () => {
+    if (obsSaving) return
+    setObsModal({ open: false, cliente: null, text: '' })
+  }
+
+  const saveObs = async () => {
+    if (!obsModal.cliente || obsSaving) return
+    setObsSaving(true)
+    try {
+      await clienteService.alterarObservacao(obsModal.cliente.id, obsModal.text)
+      setObsOverrides((prev) => ({ ...prev, [obsModal.cliente.id]: obsModal.text }))
+      addToast('Observação salva com sucesso!', 'success')
+      setObsModal({ open: false, cliente: null, text: '' })
+    } catch {
+      addToast('Erro ao salvar observação.', 'error')
+    } finally {
+      setObsSaving(false)
+    }
+  }
+
   return (
     <>
       <Header
@@ -205,6 +238,7 @@ export default function Carteira() {
                       <th onClick={() => handleSort('ultimoContato')}>Último Contato {sortIcon('ultimoContato')}</th>
                       <th>Próxima Ação</th>
                       <th onClick={() => handleSort('statusCobranca')}>Status {sortIcon('statusCobranca')}</th>
+                      <th>Obs</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -242,6 +276,14 @@ export default function Carteira() {
                             {STATUS_LABELS[c.statusCobranca] || c.statusCobranca}
                           </Badge>
                         </td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className="obs-cell">
+                            {obsAtual(c) && (
+                              <span className="obs-preview" title={obsAtual(c)}>{obsAtual(c)}</span>
+                            )}
+                            <button className="obs-edit-btn" onClick={(e) => openObsModal(e, c)} title="Editar observação">✏</button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -258,6 +300,42 @@ export default function Carteira() {
           )}
         </Card>
       </div>
+
+      <Modal
+        open={obsModal.open}
+        onClose={closeObsModal}
+        title={`Observação — ${obsModal.cliente?.razaoSocial || ''}`}
+        size="md"
+        footer={
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={closeObsModal} disabled={obsSaving}>Cancelar</Button>
+            <Button variant="primary" onClick={saveObs} loading={obsSaving}>Salvar</Button>
+          </div>
+        }
+      >
+        <div style={{ marginBottom: 8, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          Cliente: <strong style={{ color: 'var(--text-secondary)' }}>{obsModal.cliente?.codigo}</strong>
+          {' · '}Loja: <strong style={{ color: 'var(--text-secondary)' }}>{obsModal.cliente?.loja}</strong>
+        </div>
+        <textarea
+          value={obsModal.text}
+          onChange={(e) => setObsModal((m) => ({ ...m, text: e.target.value }))}
+          rows={5}
+          placeholder="Digite a observação sobre este cliente..."
+          style={{
+            width: '100%',
+            padding: '10px 12px',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            background: 'var(--surface)',
+            color: 'var(--text-primary)',
+            fontSize: '0.875rem',
+            resize: 'vertical',
+            fontFamily: 'inherit',
+            outline: 'none',
+          }}
+        />
+      </Modal>
     </>
   )
 }

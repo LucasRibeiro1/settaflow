@@ -86,6 +86,7 @@ export function mapCliente(raw) {
     valorTotalEmitido: parseFloat(raw.TOTAL_EMITIDO ?? raw.total_emitido ?? 0) || 0,
     valorPagoEmDia: parseFloat(raw.TOTAL_PAGO_EMDIA ?? raw.total_pago_emdia ?? 0) || 0,
     percAdimplencia: parseFloat(raw.PERC_ADIMPLENCIA ?? raw.perc_adimplencia ?? 0) || 0,
+    observacoes: String(raw.OBSERVACAO ?? raw.observacao ?? '').trim(),
     // Preenchidos ao enriquecer com títulos
     valorTotalAberto: 0,
     qtdTitulosVencidos: 0,
@@ -97,7 +98,6 @@ export function mapCliente(raw) {
     proximaAcao: '—',
     dataProximaAcao: null,
     statusCobranca: 'em_cobranca',
-    observacoes: '',
   }
 }
 
