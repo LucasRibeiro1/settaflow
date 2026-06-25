@@ -11,7 +11,7 @@ import { useApi } from '../../hooks/useApi'
 import { dashboardService } from '../../services/dashboardService'
 import { tratativaService } from '../../services/tratativaService'
 import { useToast } from '../../context/ToastContext'
-import { formatCurrency, formatDate, PRIORIDADE_LABELS, PRIORIDADE_COLORS, STATUS_LABELS, TIPO_CONTATO_LABELS } from '../../utils/formatters'
+import { formatCurrency, formatDate, PRIORIDADE_LABELS, PRIORIDADE_COLORS, STATUS_LABELS, TIPO_CONTATO_LABELS, ACORDO_STATUS_LABELS, ACORDO_STATUS_COLORS } from '../../utils/formatters'
 import './MinhaFila.css'
 
 const PRIORIDADE_ORDER = { critica: 0, alta: 1, media: 2, baixa: 3 }
@@ -31,6 +31,7 @@ export default function MinhaFila() {
   const [saving, setSaving] = useState(false)
 
   const { data: fila, loading: loadingFila } = useApi(() => dashboardService.getFilaTrabalho(), [])
+  const { data: acordosHoje, loading: loadingAcordos } = useApi(() => dashboardService.getAcordosHoje(), [])
   const { data: vencHoje, loading: loadingVenc } = useApi(() => dashboardService.getTitulosVencendoHoje(), [])
 
   const handleRegistrar = async () => {
@@ -82,6 +83,17 @@ export default function MinhaFila() {
             {fila?.length ? (
               <span style={{ marginLeft: 6, background: 'var(--primary)', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: '0.7rem', fontWeight: 700 }}>
                 {fila.length}
+              </span>
+            ) : null}
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'acordos' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('acordos')}
+          >
+            Acordos Hoje
+            {acordosHoje?.length ? (
+              <span style={{ marginLeft: 6, background: '#8b5cf6', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: '0.7rem', fontWeight: 700 }}>
+                {acordosHoje.length}
               </span>
             ) : null}
           </button>
@@ -190,7 +202,83 @@ export default function MinhaFila() {
           )
         )}
 
-        {/* ── Tab 2: Vencimentos Hoje ── */}
+        {/* ── Tab 2: Acordos Hoje ── */}
+        {activeTab === 'acordos' && (
+          loadingAcordos ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Carregando acordos...</div>
+          ) : !acordosHoje?.length ? (
+            <Card>
+              <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <p style={{ fontSize: '3rem', marginBottom: 12 }}>🤝</p>
+                <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Nenhum acordo com parcela para hoje.</p>
+                <p style={{ fontSize: '0.875rem', marginTop: 4 }}>
+                  Acordos com 1ª parcela vencendo em {hoje} aparecerão aqui.
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <>
+              <div style={{ marginBottom: 12 }}>
+                <Badge type="info">
+                  {acordosHoje.length} acordo{acordosHoje.length !== 1 ? 's' : ''} com parcela hoje ·{' '}
+                  {formatCurrency(acordosHoje.reduce((s, a) => s + a.valorNegociado, 0))} em negociação
+                </Badge>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {acordosHoje.map((a) => (
+                  <Card key={a.id} hoverable>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => navigate(`/carteira/${a.clienteId}`)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 700, fontSize: '0.9rem', fontFamily: 'inherit' }}
+                          >
+                            {a.clienteNome}
+                          </button>
+                          {a.clienteNome2 && a.clienteNome2 !== a.clienteNome && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{a.clienteNome2}</span>
+                          )}
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{a.clienteCodigo}</span>
+                          {a.grupoCliente && a.grupoCliente !== '—' && (
+                            <span style={{ fontSize: '0.7rem', background: 'var(--primary-50)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 4 }}>
+                              {a.grupoCliente}
+                            </span>
+                          )}
+                          <Badge type={ACORDO_STATUS_COLORS[a.status] || 'default'}>
+                            {ACORDO_STATUS_LABELS[a.status] || a.status}
+                          </Badge>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, auto))', gap: '10px 28px' }}>
+                          {[
+                            ['Valor Negociado', formatCurrency(a.valorNegociado)],
+                            ['Parcelas', `${a.qtdParcelas}x de ${formatCurrency(a.valorParcela)}`],
+                            ['1ª Parcela', formatDate(a.vencimentoPrimeiraParcela)],
+                            ['Data do Acordo', formatDate(a.dataAcordo)],
+                            ['Saldo em Aberto', formatCurrency(a.valorAberto)],
+                          ].map(([label, val]) => (
+                            <div key={label}>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>{label}</span>
+                              <p style={{ fontWeight: 600, fontSize: '0.825rem', marginTop: 2 }}>{val}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {a.observacoes && (
+                          <p style={{ marginTop: 10, fontSize: '0.775rem', color: 'var(--text-muted)' }}>{a.observacoes}</p>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/carteira/${a.clienteId}`)}>
+                        Ver cliente →
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )
+        )}
+
+        {/* ── Tab 3: Vencimentos Hoje ── */}
         {activeTab === 'vencendo' && (
           loadingVenc ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Buscando vencimentos...</div>

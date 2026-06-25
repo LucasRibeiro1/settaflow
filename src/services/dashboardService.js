@@ -2,6 +2,7 @@ import { mockDashboard } from '../mocks/dashboard'
 import { clienteService } from './clienteService'
 import { tituloService } from './tituloService'
 import { tratativaService } from './tratativaService'
+import { acordoService } from './acordoService'
 import { computeDashboard } from '../utils/apiMappers'
 
 const USE_MOCK = false
@@ -83,6 +84,38 @@ export const dashboardService = {
         }
       })
       .sort((a, b) => b.maiorAtraso - a.maiorAtraso)
+  },
+
+  // Acordos cuja 1ª parcela vence hoje
+  async getAcordosHoje() {
+    const hoje = todayStr()
+
+    const [acordos, clientes] = await Promise.all([
+      acordoService.getAcordos(),
+      clienteService.getClientesEnriched(),
+    ])
+
+    const clienteMap = {}
+    for (const c of clientes) {
+      clienteMap[c.id] = c
+      if (c.codigo) clienteMap[c.codigo] = c
+    }
+
+    return acordos
+      .filter((a) => a.vencimentoPrimeiraParcela === hoje)
+      .map((a) => {
+        const c = clienteMap[a.clienteId] || clienteMap[a.clienteCodigo] || {}
+        return {
+          ...a,
+          clienteNome: c.razaoSocial || a.clienteCodigo,
+          clienteNome2: c.nomeFantasia || '',
+          filial: c.filial || '',
+          grupoCliente: c.grupoCliente || '—',
+          valorAberto: c.valorTotalAberto || 0,
+          maiorAtraso: c.maiorAtraso || 0,
+        }
+      })
+      .sort((a, b) => b.valorNegociado - a.valorNegociado)
   },
 
   // Títulos que vencem exatamente hoje
