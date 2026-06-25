@@ -189,14 +189,8 @@ img {
 
 /* ── Responsividade mobile global ─────────────────────────────────── */
 
-/* Em mobile, a sidebar some do fluxo — main-content ocupa tudo */
+/* Em mobile, main-content ocupa toda a largura (sidebar é position:fixed, fora do fluxo) */
 @media (max-width: 768px) {
-  .sidebar {
-    /* sidebar é fixed em mobile — não ocupa espaço no fluxo */
-    flex-shrink: 0;
-    width: 0 !important;
-    min-width: 0 !important;
-  }
   .main-content { width: 100%; }
 }
 

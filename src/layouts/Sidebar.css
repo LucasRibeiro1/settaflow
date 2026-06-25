@@ -150,8 +150,9 @@
     height: 100vh;
     z-index: 300;
     transform: translateX(-100%);
-    width: var(--sidebar-width) !important;
-    min-width: var(--sidebar-width) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 260px !important;
+    min-width: 260px !important;
     box-shadow: none;
   }
   .sidebar-mobile-open {
