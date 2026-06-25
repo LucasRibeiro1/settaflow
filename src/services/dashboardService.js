@@ -31,12 +31,13 @@ export const dashboardService = {
   async getDashboard() {
     if (USE_MOCK) return mockDashboard
 
-    const [clientes, titulos] = await Promise.all([
+    const [clientes, titulos, tratativas] = await Promise.all([
       clienteService.getClientesEnriched(),
       tituloService.getTitulosRaw(),
+      tratativaService.getTratativas(),
     ])
 
-    return computeDashboard(clientes, titulos)
+    return computeDashboard(clientes, titulos, tratativas)
   },
 
   // Fila de cobrança: tratativas com DTPROX = hoje (busca global com range de clientes)

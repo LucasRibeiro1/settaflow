@@ -211,13 +211,16 @@ export function enrichClientesWithTitulos(clientes, titulos) {
 }
 
 const STATUS_CONFIG = {
-  baixa:   { label: 'Baixo (1-30d)',    cor: '#22c55e' },
-  media:   { label: 'Médio (31-90d)',   cor: '#f59e0b' },
-  alta:    { label: 'Alto (91-180d)',   cor: '#f97316' },
-  critica: { label: 'Crítico (+180d)',  cor: '#dc2626' },
+  sem_contato:        { label: 'Sem Contato',     cor: '#94a3b8' },
+  em_cobranca:        { label: 'Em Cobrança',     cor: '#f59e0b' },
+  negociacao:         { label: 'Negociação',      cor: '#8b5cf6' },
+  promessa_pagamento: { label: 'Promessa Pgto',   cor: '#06b6d4' },
+  aguardando_retorno: { label: 'Aguardando',      cor: '#f97316' },
+  acordo_realizado:   { label: 'Acordo',          cor: '#10b981' },
+  sem_acordo:         { label: 'Sem Acordo',      cor: '#dc2626' },
 }
 
-export function computeDashboard(clientes, titulos) {
+export function computeDashboard(clientes, titulos, tratativas = []) {
   // SQL já garante E1_SALDO > 0 no WHERE; IS-/IN- retornam saldo negativo da API
   const titulosAbertos = titulos.filter((t) => isTituloValido(t))
   const titulosVencidos = titulosAbertos.filter((t) => t.isVencido)
@@ -258,18 +261,30 @@ export function computeDashboard(clientes, titulos) {
     faixaBuckets[key].valor += c.valorTotalAberto
   }
 
-  // Status distribution
+  // Status distribution: última tratativa por cliente → sem_contato se não houver
+  const ultimaTratativaStatus = {}
+  for (const t of tratativas) {
+    const cid = String(t.clienteId)
+    const atual = ultimaTratativaStatus[cid]
+    if (!atual || (t.dataHora && (!atual.dataHora || t.dataHora > atual.dataHora))) {
+      ultimaTratativaStatus[cid] = t
+    }
+  }
+
   const statusCount = {}
   for (const c of clientesComAtraso) {
-    statusCount[c.statusCobranca] = (statusCount[c.statusCobranca] || 0) + 1
+    const ultima = ultimaTratativaStatus[String(c.id)]
+    const key = ultima?.status || 'sem_contato'
+    statusCount[key] = (statusCount[key] || 0) + 1
   }
-  const STATUS_ORDER = ['baixa', 'media', 'alta', 'critica']
+
+  const STATUS_ORDER = ['sem_contato', 'em_cobranca', 'negociacao', 'promessa_pagamento', 'aguardando_retorno', 'acordo_realizado', 'sem_acordo']
   const clientesPorStatus = STATUS_ORDER
     .filter((key) => statusCount[key])
     .map((key) => ({
-      status: STATUS_CONFIG[key].label,
+      status: STATUS_CONFIG[key]?.label || key,
       quantidade: statusCount[key],
-      cor: STATUS_CONFIG[key].cor,
+      cor: STATUS_CONFIG[key]?.cor || '#94a3b8',
     }))
 
   const devedoresOrdenados = [...clientesComAtraso]
