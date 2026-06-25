@@ -215,7 +215,7 @@ const STATUS_CONFIG = {
   em_cobranca:        { label: 'Em Cobrança',     cor: '#f59e0b' },
   negociacao:         { label: 'Negociação',      cor: '#8b5cf6' },
   promessa_pagamento: { label: 'Promessa Pgto',   cor: '#06b6d4' },
-  aguardando_retorno: { label: 'Aguardando',      cor: '#f97316' },
+  aguardando_retorno: { label: 'Aguard. Retorno', cor: '#f97316' },
   acordo_realizado:   { label: 'Acordo',          cor: '#10b981' },
   sem_acordo:         { label: 'Sem Acordo',      cor: '#dc2626' },
 }
