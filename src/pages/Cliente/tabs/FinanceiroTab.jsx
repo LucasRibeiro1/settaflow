@@ -6,6 +6,8 @@ import { Modal } from '../../../components/ui/Modal'
 import { Input, Select } from '../../../components/ui/Input'
 import { useApi } from '../../../hooks/useApi'
 import { clienteService } from '../../../services/clienteService'
+import { tituloService } from '../../../services/tituloService'
+import { useToast } from '../../../context/ToastContext'
 import { formatCurrency, formatDate } from '../../../utils/formatters'
 import { SkeletonTable } from '../../../components/ui/Skeleton'
 
@@ -14,39 +16,35 @@ const INADIMPLENCIA_OPTIONS = [
   { value: 'normal', label: 'Normal' },
   { value: 'externa', label: 'Externa' },
   { value: 'juridico', label: 'Jurídico' },
-  { value: 'sem_classificacao', label: 'Sem Classificação' },
 ]
 
 const MOTIVO_OPTIONS = [
   { value: '', label: '— Sem motivo —' },
   { value: 'setta', label: 'Setta' },
   { value: 'cliente', label: 'Cliente' },
-  { value: 'sem_motivo', label: 'Sem Motivo' },
 ]
 
 const INADIM_BADGE = {
   normal: 'success',
   externa: 'warning',
   juridico: 'danger',
-  sem_classificacao: 'default',
 }
 
 const INADIM_LABEL = {
   normal: 'Normal',
   externa: 'Externa',
   juridico: 'Jurídico',
-  sem_classificacao: 'Sem Class.',
 }
 
 const MOTIVO_LABEL = {
   setta: 'Setta',
   cliente: 'Cliente',
-  sem_motivo: 'Sem Motivo',
 }
 
 const CALC_DEFAULTS = { percDiario: '0.10', percFixo: '2.00', valorProduto: '0', diasPatio: '0' }
 
 export function FinanceiroTab({ clienteId, cliente }) {
+  const { addToast } = useToast()
   const { data: titulos, loading } = useApi(
     () => clienteService.getTitulosCliente(clienteId),
     [clienteId]
@@ -55,6 +53,7 @@ export function FinanceiroTab({ clienteId, cliente }) {
   const [overrides, setOverrides] = useState({})
   const [editModal, setEditModal] = useState(null)
   const [editVals, setEditVals] = useState({ inadimplencia: '', motivo: '' })
+  const [saving, setSaving] = useState(false)
   const [calcModal, setCalcModal] = useState(null)
   const [calcVals, setCalcVals] = useState(CALC_DEFAULTS)
 
@@ -69,9 +68,18 @@ export function FinanceiroTab({ clienteId, cliente }) {
     setEditModal(t)
   }
 
-  function saveEdit() {
-    setOverrides((prev) => ({ ...prev, [editModal.id]: { ...editVals } }))
-    setEditModal(null)
+  async function saveEdit() {
+    setSaving(true)
+    try {
+      await tituloService.alterarClassificacao(editModal, editVals)
+      setOverrides((prev) => ({ ...prev, [editModal.id]: { ...editVals } }))
+      addToast('Classificação atualizada com sucesso.', 'success')
+      setEditModal(null)
+    } catch {
+      addToast('Erro ao salvar classificação.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function openCalc(t) {
@@ -257,13 +265,13 @@ export function FinanceiroTab({ clienteId, cliente }) {
       {/* Modal: Editar classificação */}
       <Modal
         open={!!editModal}
-        onClose={() => setEditModal(null)}
+        onClose={() => !saving && setEditModal(null)}
         title="Editar Classificação"
         size="sm"
         footer={
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setEditModal(null)}>Cancelar</Button>
-            <Button variant="primary" onClick={saveEdit}>Salvar</Button>
+            <Button variant="ghost" onClick={() => setEditModal(null)} disabled={saving}>Cancelar</Button>
+            <Button variant="primary" onClick={saveEdit} loading={saving}>Salvar</Button>
           </div>
         }
       >
