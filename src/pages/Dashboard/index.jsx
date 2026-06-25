@@ -250,26 +250,20 @@ export default function Dashboard() {
           <Card padding={false}>
             <CardHeader
               title="Histórico de Contas a Receber em Atraso"
-              subtitle="Saldo vencido acumulado por mês (data reprogramada)"
+              subtitle="Barras: saldo do mês · Linha: acumulado (data reprogramada)"
             />
             <div style={{ padding: '0 16px 16px' }}>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={evolucaoMensal}>
+                <ComposedChart data={evolucaoMensal}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
                   <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                  <YAxis yAxisId="left" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                   <Tooltip content={<CustomTooltipCurrency />} />
                   <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                  <Line
-                    type="monotone"
-                    dataKey="saldoVencido"
-                    name="Saldo Vencido"
-                    stroke="#ef4444"
-                    strokeWidth={2.5}
-                    dot={{ r: 3, fill: '#ef4444' }}
-                    activeDot={{ r: 5 }}
-                  />
-                </LineChart>
+                  <Bar yAxisId="left" dataKey="saldoMes" name="Saldo do Mês" fill="#f59e0b" opacity={0.75} radius={[3, 3, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="saldoVencido" name="Acumulado" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </Card>

@@ -339,15 +339,17 @@ export function computeDashboard(clientes, titulos, tratativas = []) {
       if (cm > 12) { cm = 1; cy++ }
     }
   }
-  // Acumulado crescente (running total)
+  // Acumulado crescente (running total) + saldo mensal não-cumulativo
   let acumuladoMes = 0
   const evolucaoMensal = Object.keys(mesMap)
     .sort()
     .map((key) => {
-      acumuladoMes += mesMap[key]
+      const saldoMes = mesMap[key]
+      acumuladoMes += saldoMes
       return {
         mes: `${String(parseInt(key.slice(5), 10)).padStart(2, '0')}/${key.slice(2, 4)}`,
         saldoVencido: acumuladoMes,
+        saldoMes,
       }
     })
 
