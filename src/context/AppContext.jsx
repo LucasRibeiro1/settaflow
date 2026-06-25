@@ -4,6 +4,7 @@ const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('setta_theme') || 'light')
 
@@ -13,10 +14,16 @@ export function AppProvider({ children }) {
   }, [theme])
 
   const toggleSidebar = () => setSidebarCollapsed((v) => !v)
+  const toggleMobileSidebar = () => setMobileSidebarOpen((v) => !v)
+  const closeMobileSidebar = () => setMobileSidebarOpen(false)
   const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))
 
   return (
-    <AppContext.Provider value={{ sidebarCollapsed, toggleSidebar, loading, setLoading, theme, toggleTheme }}>
+    <AppContext.Provider value={{
+      sidebarCollapsed, toggleSidebar,
+      mobileSidebarOpen, toggleMobileSidebar, closeMobileSidebar,
+      loading, setLoading, theme, toggleTheme,
+    }}>
       {children}
     </AppContext.Provider>
   )

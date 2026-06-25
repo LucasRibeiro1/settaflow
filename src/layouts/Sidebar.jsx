@@ -20,13 +20,17 @@ const NAV_ITEMS = [
 ]
 
 export function Sidebar() {
-  const { sidebarCollapsed } = useApp()
+  const { sidebarCollapsed, mobileSidebarOpen, closeMobileSidebar } = useApp()
   const { user } = useAuth()
   const nomeUsuario = user?.nome || user?.username || ''
   const perfilUsuario = user?.perfil || ''
 
   return (
-    <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <aside className={[
+      'sidebar',
+      sidebarCollapsed ? 'sidebar-collapsed' : '',
+      mobileSidebarOpen ? 'sidebar-mobile-open' : '',
+    ].join(' ')}>
       <div className="sidebar-logo">
         {sidebarCollapsed ? (
           <img src="/logo-icon.png" alt="Setta" className="sidebar-logo-icon-img" />
@@ -45,29 +49,27 @@ export function Sidebar() {
             key={item.to}
             to={item.to}
             end={item.exact}
+            onClick={closeMobileSidebar}
             className={({ isActive }) =>
               `sidebar-item ${isActive ? 'sidebar-item-active' : ''}`
             }
           >
             <span className="sidebar-item-icon">{item.icon}</span>
-            {!sidebarCollapsed && <span className="sidebar-item-label">{item.label}</span>}
+            <span className="sidebar-item-label">{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
       <div className="sidebar-footer">
-        {!sidebarCollapsed && (
-          <div className="sidebar-user">
-            <div className="sidebar-avatar">{initials(nomeUsuario)}</div>
+        <div className="sidebar-user">
+          <div className="sidebar-avatar">{initials(nomeUsuario)}</div>
+          {!sidebarCollapsed && (
             <div className="sidebar-user-info">
               <span className="sidebar-user-name">{nomeUsuario}</span>
               {perfilUsuario && <span className="sidebar-user-role">{perfilUsuario}</span>}
             </div>
-          </div>
-        )}
-        {sidebarCollapsed && (
-          <div className="sidebar-avatar sidebar-avatar-center">{initials(nomeUsuario)}</div>
-        )}
+          )}
+        </div>
       </div>
     </aside>
   )

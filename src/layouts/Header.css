@@ -147,3 +147,22 @@
   border-color: var(--danger-border);
   color: var(--danger);
 }
+
+.header-logout-icon { display: none; }
+
+/* ── Mobile header ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .header { padding: 0 16px; gap: 10px; }
+  .header-right { gap: 8px; }
+  .header-title { font-size: 0.9rem; }
+  .header-subtitle { display: none; }
+  .header-breadcrumb { display: none; }
+}
+
+@media (max-width: 480px) {
+  .header-logout-text { display: none; }
+  .header-logout-icon { display: block; }
+  .header-logout { width: 34px; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .header-theme { display: none; }
+  .header-actions .btn span:not(.btn-icon) { display: none; }
+}

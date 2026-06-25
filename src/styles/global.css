@@ -186,3 +186,51 @@ img {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── Responsividade mobile global ─────────────────────────────────── */
+
+/* Em mobile, a sidebar some do fluxo — main-content ocupa tudo */
+@media (max-width: 768px) {
+  .sidebar {
+    /* sidebar é fixed em mobile — não ocupa espaço no fluxo */
+    flex-shrink: 0;
+    width: 0 !important;
+    min-width: 0 !important;
+  }
+  .main-content { width: 100%; }
+}
+
+/* Tabelas sempre com scroll horizontal em mobile */
+@media (max-width: 768px) {
+  .data-table-wrap,
+  [style*="overflow-x: auto"],
+  [style*="overflowX: auto"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .data-table {
+    min-width: 600px;
+  }
+}
+
+/* Modais menores em mobile */
+@media (max-width: 600px) {
+  .modal-overlay { padding: 12px; }
+  .modal { border-radius: var(--radius-lg); }
+  .modal-header { padding: 16px 18px; }
+  .modal-body { padding: 16px 18px; }
+  .modal-footer { padding: 12px 18px; }
+}
+
+/* Cards com padding menor em mobile */
+@media (max-width: 600px) {
+  .card { padding: 14px; }
+}
+
+/* Breadcrumb não quebra */
+.breadcrumb { flex-wrap: wrap; }
+
+/* Paginação em mobile */
+@media (max-width: 480px) {
+  .pagination-wrapper { flex-direction: column; gap: 8px; align-items: center; }
+}

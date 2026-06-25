@@ -12,7 +12,12 @@ function initials(nome) {
 }
 
 export function Header({ title, subtitle, breadcrumb, actions }) {
-  const { toggleSidebar, sidebarCollapsed, theme, toggleTheme } = useApp()
+  const { toggleSidebar, sidebarCollapsed, toggleMobileSidebar, mobileSidebarOpen, theme, toggleTheme } = useApp()
+
+  function handleToggle() {
+    if (window.innerWidth < 768) toggleMobileSidebar()
+    else toggleSidebar()
+  }
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [notifOpen, setNotifOpen] = useState(false)
@@ -26,8 +31,8 @@ export function Header({ title, subtitle, breadcrumb, actions }) {
   return (
     <header className="header">
       <div className="header-left">
-        <button className="header-toggle" onClick={toggleSidebar} title="Recolher menu">
-          {sidebarCollapsed ? '☰' : '✕'}
+        <button className="header-toggle" onClick={handleToggle} title="Menu">
+          {mobileSidebarOpen ? '✕' : '☰'}
         </button>
         <div>
           {breadcrumb && <div className="header-breadcrumb">{breadcrumb}</div>}
@@ -55,7 +60,8 @@ export function Header({ title, subtitle, breadcrumb, actions }) {
         </div>
 
         <button className="header-logout" onClick={handleLogout} title="Sair do sistema">
-          Sair
+          <span className="header-logout-text">Sair</span>
+          <span className="header-logout-icon">⏻</span>
         </button>
         <div className="header-avatar" title={user?.nome || user?.username}>
           {initials(user?.nome || user?.username)}
