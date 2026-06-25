@@ -42,7 +42,7 @@ export default function ClienteDetalhe() {
     <>
       <Header
         title={cliente.nomeFantasia || cliente.razaoSocial}
-        subtitle={`${cliente.codigo} · ${cliente.cidade}/${cliente.uf}`}
+        subtitle={`${cliente.codigo}${cliente.loja ? `-${cliente.loja}` : ''} · ${cliente.cidade}/${cliente.uf}`}
         breadcrumb={
           <Breadcrumb items={[
             { to: '/', label: 'Dashboard' },

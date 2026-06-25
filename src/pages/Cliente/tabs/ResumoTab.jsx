@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, CardHeader } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { useToast } from '../../../context/ToastContext'
+import { clienteService } from '../../../services/clienteService'
 import { formatCurrency, formatCNPJ } from '../../../utils/formatters'
 import './ResumoTab.css'
 
@@ -26,9 +27,14 @@ export function ResumoTab({ cliente }) {
 
   const handleSaveObs = async () => {
     setSaving(true)
-    await new Promise((r) => setTimeout(r, 600))
-    setSaving(false)
-    addToast('Observações salvas com sucesso.', 'success')
+    try {
+      await clienteService.alterarObservacao(cliente.codigo, cliente.loja, observacoes)
+      addToast('Observações salvas com sucesso.', 'success')
+    } catch {
+      addToast('Erro ao salvar observações.', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

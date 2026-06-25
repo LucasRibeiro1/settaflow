@@ -56,7 +56,7 @@ export function extractArray(response) {
 
 export function mapCliente(raw) {
   const codigo = String(raw.CODIGO ?? raw.codigo ?? '').trim()
-  const loja = (String(raw.LOJA ?? raw.loja ?? '').trim()) || '01'
+  const loja = String(raw.LOJA ?? raw.loja ?? '').trim()
   const uf = String(raw.ESTADO ?? raw.estado ?? '').trim().toUpperCase()
 
   const emailRaw = String(raw.EMAIL ?? raw.email ?? '').trim()

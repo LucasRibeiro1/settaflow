@@ -129,7 +129,7 @@ export const clienteService = {
   async alterarObservacao(codigo, loja, observacao) {
     const { data } = await protheusApi.post('/rest/STWS019A1/alterarobs', {
       cCODCLI: String(codigo).trim(),
-      cLoja:   String(loja || '01').trim(),
+      cLoja:   String(loja).trim(),
       cObserv: String(observacao || ''),
     })
     return data
