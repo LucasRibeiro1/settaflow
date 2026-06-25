@@ -126,11 +126,10 @@ export const clienteService = {
     return titulos.filter((t) => t.clienteId === id || t.clienteCodigo === codigo)
   },
 
-  async alterarObservacao(clienteId, observacao) {
-    const [cCODCLI, cLoja] = String(clienteId).split('-')
+  async alterarObservacao(codigo, loja, observacao) {
     const { data } = await protheusApi.post('/rest/STWS019A1/alterarobs', {
-      cCODCLI,
-      cLoja: cLoja || '01',
+      cCODCLI: String(codigo).trim(),
+      cLoja:   String(loja || '01').trim(),
       cObserv: String(observacao || ''),
     })
     return data

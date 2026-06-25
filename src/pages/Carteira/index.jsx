@@ -151,7 +151,7 @@ export default function Carteira() {
     if (!obsModal.cliente || obsSaving) return
     setObsSaving(true)
     try {
-      await clienteService.alterarObservacao(obsModal.cliente.id, obsModal.text)
+      await clienteService.alterarObservacao(obsModal.cliente.codigo, obsModal.cliente.loja, obsModal.text)
       setObsOverrides((prev) => ({ ...prev, [obsModal.cliente.id]: obsModal.text }))
       addToast('Observação salva com sucesso!', 'success')
       setObsModal({ open: false, cliente: null, text: '' })
@@ -227,6 +227,7 @@ export default function Carteira() {
                     <tr>
                       <th onClick={() => handleSort('filial')}>Filial {sortIcon('filial')}</th>
                       <th onClick={() => handleSort('codigo')}>Código {sortIcon('codigo')}</th>
+                      <th onClick={() => handleSort('loja')}>Loja {sortIcon('loja')}</th>
                       <th onClick={() => handleSort('razaoSocial')}>Razão Social {sortIcon('razaoSocial')}</th>
                       <th>Fantasia</th>
                       <th onClick={() => handleSort('grupoCliente')}>Grupo de Venda {sortIcon('grupoCliente')}</th>
@@ -250,6 +251,7 @@ export default function Carteira() {
                       >
                         <td style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.filial}</td>
                         <td className="td-codigo">{c.codigo}</td>
+                        <td className="td-center" style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{c.loja}</td>
                         <td className="td-nome">{c.razaoSocial}</td>
                         <td className="text-secondary">{c.nomeFantasia}</td>
                         <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{c.grupoCliente}</td>
