@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Input'
-import { Modal, ConfirmModal } from '../../components/ui/Modal'
+import { Modal } from '../../components/ui/Modal'
 import { Textarea } from '../../components/ui/Input'
 import { Pagination } from '../../components/ui/Pagination'
 import { Breadcrumb } from '../../components/common/Breadcrumb'
@@ -41,10 +41,8 @@ export default function Tratativas() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [deleteId, setDeleteId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
   const debouncedSearch = useDebounce(search, 350)
 
@@ -88,20 +86,6 @@ export default function Tratativas() {
       addToast('Erro ao salvar.', 'error')
     } finally {
       setSaving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    setDeleting(true)
-    try {
-      await tratativaService.deleteTratativa(deleteId)
-      addToast('Tratativa excluída.', 'success')
-      setDeleteId(null)
-      refetch()
-    } catch {
-      addToast('Erro ao excluir.', 'error')
-    } finally {
-      setDeleting(false)
     }
   }
 
@@ -161,20 +145,19 @@ export default function Tratativas() {
                       <th>Observação</th>
                       <th>Próxima Ação</th>
                       <th>Data Ação</th>
-                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedData.map((t) => (
                       <tr key={t.id}>
                         <td>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 2 }}>{t.clienteCodigo}</div>
                           <button
                             onClick={() => navigate(`/carteira/${t.clienteId}`)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, fontSize: '0.8rem', fontFamily: 'inherit' }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600, fontSize: '0.8rem', fontFamily: 'inherit', padding: 0, textAlign: 'left' }}
                           >
                             {t.clienteNome}
                           </button>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t.clienteCodigo}</div>
                         </td>
                         <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatDatetime(t.dataHora)}</td>
                         <td>{t.usuario}</td>
@@ -201,15 +184,6 @@ export default function Tratativas() {
                         </td>
                         <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           {t.dataProximaAcao ? formatDate(t.dataProximaAcao) : '—'}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => setDeleteId(t.id)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.875rem' }}
-                            title="Excluir"
-                          >
-                            🗑
-                          </button>
                         </td>
                       </tr>
                     ))}
@@ -278,14 +252,6 @@ export default function Tratativas() {
         </div>
       </Modal>
 
-      <ConfirmModal
-        open={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Excluir tratativa"
-        message="Tem certeza que deseja excluir esta tratativa?"
-        loading={deleting}
-      />
     </>
   )
 }
