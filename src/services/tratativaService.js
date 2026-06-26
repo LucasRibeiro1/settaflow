@@ -29,47 +29,56 @@ function parseProtheusDate(raw) {
   return null
 }
 
-function uuid() {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0
-      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
-    })
+// Converte HHMMSS ou HH:MM:SS para HH:MM
+function parseProtheusTime(raw) {
+  if (!raw) return null
+  const s = String(raw).trim()
+  const hms = s.match(/^(\d{2}):(\d{2})/)
+  if (hms) return `${hms[1]}:${hms[2]}`
+  const compact = s.match(/^(\d{2})(\d{2})/)
+  if (compact) return `${compact[1]}:${compact[2]}`
+  return null
 }
 
 // Monta o payload no formato esperado pela API STWS021P
 function toProtheusPayload(payload) {
   const clienteIdStr = String(payload.clienteId || '')
   const dashIdx = clienteIdStr.lastIndexOf('-')
-  const loja = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : '01'
+  const loja = dashIdx > 0 ? clienteIdStr.slice(dashIdx + 1) : ''
   const dataHora = payload.dataHora ? new Date(payload.dataHora) : new Date()
 
   return {
-    cNUM:    payload.id || uuid(),
+    cFILIAL: payload.filial || '',
+    cNUM:    payload.id || '',   // vazio → backend gera sequencial numérico
     cCODCLI: payload.clienteCodigo || (dashIdx > 0 ? clienteIdStr.slice(0, dashIdx) : clienteIdStr),
     cLOJA:   loja,
     dDATA:   toProtheusDate(dataHora.toISOString()),
     cTPCONT: payload.tipoContato || '',
     cSTATUS: payload.status || '',
-    cOBS:    payload.observacao || '',
+    cOBSCON: payload.observacao || '',
     cPROXAC: payload.proximaAcao || '',
     dDTPROX: toProtheusDate(payload.dataProximaAcao),
     cANEXOS: payload.anexos?.length ? JSON.stringify(payload.anexos) : '',
+    cUSUARIO: payload.usuario || '',
+    cNOMCON:  payload.nomeContato || '',
+    cHORA:    payload.hora || '',
   }
 }
 
 // Mapeia retorno da API STWS021G → formato interno do app
 function fromProtheusRecord(raw) {
-  const dataIso = parseProtheusDate(raw.DATA)
+  const dataIso   = parseProtheusDate(raw.DATA)
+  const horaIso   = parseProtheusTime(raw.HORA)
   const dtproxIso = parseProtheusDate(raw.DTPROX)
 
   return {
     id: raw.Num,
     clienteId: `${String(raw.CODCLI || '').trim()}-${String(raw.LOJA || '').trim()}`,
     clienteCodigo: String(raw.CODCLI || '').trim(),
-    usuario: '',
-    dataHora: dataIso ? `${dataIso}T00:00:00` : null,
+    usuario: String(raw.USUARIO || '').trim(),
+    nomeContato: String(raw.NOMCON || '').trim(),
+    hora: horaIso || '',
+    dataHora: dataIso ? `${dataIso}T${horaIso || '00:00'}` : null,
     tipoContato: raw.TPCONT || '',
     status: raw.STATUS || '',
     observacao: raw.OBS || '',

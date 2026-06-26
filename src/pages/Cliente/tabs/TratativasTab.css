@@ -82,6 +82,13 @@
   color: var(--text-muted);
 }
 
+.tratativa-nomcon {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.tratativa-nomcon strong { color: var(--text-secondary); }
+
 .tratativa-obs {
   font-size: 0.8rem;
   color: var(--text-secondary);

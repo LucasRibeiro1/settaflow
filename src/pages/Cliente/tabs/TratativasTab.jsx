@@ -5,6 +5,7 @@ import { Badge } from '../../../components/ui/Badge'
 import { Modal } from '../../../components/ui/Modal'
 import { Input, Select, Textarea } from '../../../components/ui/Input'
 import { useApi } from '../../../hooks/useApi'
+import { useAuth } from '../../../context/AuthContext'
 import { tratativaService } from '../../../services/tratativaService'
 import { useToast } from '../../../context/ToastContext'
 import {
@@ -22,6 +23,9 @@ const EMPTY_FORM = {
   observacao: '',
   proximaAcao: '',
   dataProximaAcao: '',
+  usuario: '',
+  nomeContato: '',
+  hora: '',
 }
 
 function formatBytes(bytes) {
@@ -42,6 +46,7 @@ const FILE_ICON = {
 
 export function TratativasTab({ clienteId, cliente }) {
   const { addToast } = useToast()
+  const { user } = useAuth()
   const fileInputRef = useRef(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -54,7 +59,14 @@ export function TratativasTab({ clienteId, cliente }) {
   )
 
   const openNew = () => {
-    setForm(EMPTY_FORM)
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    setForm({
+      ...EMPTY_FORM,
+      usuario: user?.username || user?.nome || '',
+      hora: `${hh}:${mm}`,
+    })
     setAttachments([])
     setShowForm(true)
   }
@@ -92,7 +104,7 @@ export function TratativasTab({ clienteId, cliente }) {
         clienteId: clienteId,
         clienteNome: cliente.razaoSocial,
         clienteCodigo: cliente.codigo,
-        usuario: 'Ana Costa',
+        filial: cliente.filial || '',
         dataHora: new Date().toISOString(),
         anexos: attachments.map((a) => ({ nome: a.name, tamanho: a.size, tipo: a.type })),
       }
@@ -143,14 +155,18 @@ export function TratativasTab({ clienteId, cliente }) {
                     <div className="tratativa-meta">
                       <span className="tratativa-tipo">{TIPO_CONTATO_LABELS[t.tipoContato]}</span>
                       <span className="tratativa-dot">·</span>
-                      <span className="tratativa-user">{t.usuario}</span>
+                      <span className="tratativa-user">{t.usuario || '—'}</span>
                       <span className="tratativa-dot">·</span>
                       <span className="tratativa-date">{formatDatetime(t.dataHora)}</span>
+                      {t.hora && <><span className="tratativa-dot">·</span><span className="tratativa-date">{t.hora}</span></>}
                     </div>
                     <Badge type={STATUS_COLORS[t.status] || 'default'}>
                       {STATUS_LABELS[t.status] || t.status}
                     </Badge>
                   </div>
+                  {t.nomeContato && (
+                    <p className="tratativa-nomcon">👤 Contato: <strong>{t.nomeContato}</strong></p>
+                  )}
                   <p className="tratativa-obs">{t.observacao}</p>
                   {t.proximaAcao && (
                     <div className="tratativa-proxima">
@@ -212,6 +228,27 @@ export function TratativasTab({ clienteId, cliente }) {
                 <option key={v} value={v}>{l}</option>
               ))}
             </Select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <Input
+              label="Usuário"
+              value={form.usuario}
+              onChange={(e) => setForm((f) => ({ ...f, usuario: e.target.value }))}
+              placeholder="Ex: LUCAS.RIBEIRO"
+            />
+            <Input
+              label="Nome do Contato"
+              value={form.nomeContato}
+              onChange={(e) => setForm((f) => ({ ...f, nomeContato: e.target.value }))}
+              placeholder="Quem atendeu"
+            />
+            <Input
+              type="time"
+              label="Hora do Contato"
+              value={form.hora}
+              onChange={(e) => setForm((f) => ({ ...f, hora: e.target.value }))}
+            />
           </div>
 
           <Textarea
