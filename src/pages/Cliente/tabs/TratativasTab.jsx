@@ -23,6 +23,7 @@ const EMPTY_FORM = {
   observacao: '',
   proximaAcao: '',
   dataProximaAcao: '',
+  dataContato: '',
   usuario: '',
   nomeContato: '',
   hora: '',
@@ -62,10 +63,14 @@ export function TratativasTab({ clienteId, cliente }) {
     const now = new Date()
     const hh = String(now.getHours()).padStart(2, '0')
     const mm = String(now.getMinutes()).padStart(2, '0')
+    const yyyy = now.getFullYear()
+    const mo = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
     setForm({
       ...EMPTY_FORM,
       usuario: user?.username || user?.nome || '',
       hora: `${hh}:${mm}`,
+      dataContato: `${yyyy}-${mo}-${dd}`,
     })
     setAttachments([])
     setShowForm(true)
@@ -105,7 +110,7 @@ export function TratativasTab({ clienteId, cliente }) {
         clienteNome: cliente.razaoSocial,
         clienteCodigo: cliente.codigo,
         filial: cliente.filial || '',
-        dataHora: new Date().toISOString(),
+        dataHora: form.dataContato ? `${form.dataContato}T00:00:00` : new Date().toISOString(),
         anexos: attachments.map((a) => ({ nome: a.name, tamanho: a.size, tipo: a.type })),
       }
       await tratativaService.createTratativa(payload)
@@ -230,7 +235,22 @@ export function TratativasTab({ clienteId, cliente }) {
             </Select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Input
+              type="date"
+              label="Data do Contato"
+              value={form.dataContato}
+              onChange={(e) => setForm((f) => ({ ...f, dataContato: e.target.value }))}
+            />
+            <Input
+              type="time"
+              label="Hora do Contato"
+              value={form.hora}
+              onChange={(e) => setForm((f) => ({ ...f, hora: e.target.value }))}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Input
               label="Usuário"
               value={form.usuario}
@@ -242,12 +262,6 @@ export function TratativasTab({ clienteId, cliente }) {
               value={form.nomeContato}
               onChange={(e) => setForm((f) => ({ ...f, nomeContato: e.target.value }))}
               placeholder="Quem atendeu"
-            />
-            <Input
-              type="time"
-              label="Hora do Contato"
-              value={form.hora}
-              onChange={(e) => setForm((f) => ({ ...f, hora: e.target.value }))}
             />
           </div>
 
