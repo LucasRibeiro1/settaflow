@@ -1,4 +1,5 @@
 import protheusApi from './protheusApi'
+import { clienteService } from './clienteService'
 import { mockTratativas } from '../mocks/tratativas'
 
 const USE_MOCK = false
@@ -102,11 +103,21 @@ export const tratativaService = {
       result.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora))
       return result
     }
-    const { data } = await protheusApi.get(GET_URL, {
-      params: { CodCli1: '000000', CodCli2: '999999', Loja1: '00', Loja2: '99' },
-    })
+    const [{ data }, clientes] = await Promise.all([
+      protheusApi.get(GET_URL, { params: { CodCli1: '000000', CodCli2: '999999', Loja1: '00', Loja2: '99' } }),
+      clienteService.getClientesEnriched().catch(() => []),
+    ])
+    const clienteMap = {}
+    for (const c of clientes) {
+      clienteMap[c.id] = c.razaoSocial
+      if (c.codigo) clienteMap[c.codigo] = c.razaoSocial
+    }
     const lista = Array.isArray(data) ? data : (data.dados || data.resultado || data.registros || [])
-    return lista.map(fromProtheusRecord)
+    return lista.map((raw) => {
+      const t = fromProtheusRecord(raw)
+      t.clienteNome = clienteMap[t.clienteId] || clienteMap[t.clienteCodigo] || t.clienteCodigo
+      return t
+    })
   },
 
   // Busca tratativas de um cliente específico (CodCli1=CodCli2=mesmo código)
