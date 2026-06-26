@@ -83,8 +83,7 @@ export const clienteService = {
     }
 
     const todos = await fetchAllEnriched()
-    // Carteira de inadimplentes: apenas clientes com título vencido em aberto
-    let result = todos.filter((c) => c.qtdTitulosVencidos > 0)
+    let result = [...todos]
 
     if (params.search) {
       const q = params.search.toLowerCase()
