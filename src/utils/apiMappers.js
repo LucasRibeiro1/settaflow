@@ -397,3 +397,97 @@ export function computeDashboard(clientes, titulos, tratativas = []) {
     todosDevedores,
   }
 }
+
+// Recomputa apenas os dados dos gráficos com um filtro de inadimplência aplicado.
+// filtro: 'todos' | '1' (Normal) | '2' (Externa) | '3' (Jurídico)
+export function computeChartsFiltered(clientes, titulos, filtro) {
+  const titulosAbertos = titulos.filter((t) => isTituloValido(t))
+  const titulosVencidos = filtro === 'todos'
+    ? titulosAbertos.filter((t) => t.isVencido)
+    : titulosAbertos.filter((t) => t.isVencido && t.inadimplencia === filtro)
+
+  // Agrega saldo e maior atraso por cliente a partir dos títulos filtrados
+  const clienteAgg = {}
+  for (const t of titulosVencidos) {
+    const id = t.clienteId
+    if (!clienteAgg[id]) clienteAgg[id] = { id, codigo: t.clienteCodigo, saldo: 0, diasMax: 0 }
+    clienteAgg[id].saldo   += Math.abs(t.saldoAtual)
+    clienteAgg[id].diasMax  = Math.max(clienteAgg[id].diasMax, t.diasAtraso || 0)
+  }
+
+  const clienteMap = Object.fromEntries(clientes.map((c) => [c.id, c]))
+
+  // Aging de clientes por faixa
+  const faixaBuckets = {
+    '1-30d':   { faixa: '1-30d',   quantidade: 0, valor: 0 },
+    '31-60d':  { faixa: '31-60d',  quantidade: 0, valor: 0 },
+    '61-90d':  { faixa: '61-90d',  quantidade: 0, valor: 0 },
+    '91-180d': { faixa: '91-180d', quantidade: 0, valor: 0 },
+    '+180d':   { faixa: '+180d',   quantidade: 0, valor: 0 },
+  }
+  for (const agg of Object.values(clienteAgg)) {
+    const d = agg.diasMax
+    const key = d <= 30 ? '1-30d' : d <= 60 ? '31-60d' : d <= 90 ? '61-90d' : d <= 180 ? '91-180d' : '+180d'
+    faixaBuckets[key].quantidade++
+    faixaBuckets[key].valor += agg.saldo
+  }
+
+  // Maiores devedores
+  const devedoresOrdenados = Object.values(clienteAgg)
+    .sort((a, b) => b.saldo - a.saldo)
+    .map((agg) => {
+      const c = clienteMap[agg.id] || {}
+      return { id: agg.id, nome: c.nomeFantasia || c.razaoSocial || agg.codigo, valor: agg.saldo, diasAtraso: agg.diasMax }
+    })
+
+  // Histórico mensal
+  const mesMap = {}
+  for (const t of titulosVencidos) {
+    if (!t.vencimentoOriginal) continue
+    const y = t.vencimentoOriginal.getFullYear()
+    const m = t.vencimentoOriginal.getMonth() + 1
+    const key = `${y}-${String(m).padStart(2, '0')}`
+    mesMap[key] = (mesMap[key] || 0) + Math.abs(t.saldoAtual)
+  }
+  const mesKeysExistentes = Object.keys(mesMap).sort()
+  if (mesKeysExistentes.length > 0) {
+    const hojeRef = new Date()
+    const [iy, im] = mesKeysExistentes[0].split('-').map(Number)
+    let cy = iy, cm = im
+    while (cy < hojeRef.getFullYear() || (cy === hojeRef.getFullYear() && cm <= hojeRef.getMonth() + 1)) {
+      const key = `${cy}-${String(cm).padStart(2, '0')}`
+      if (!(key in mesMap)) mesMap[key] = 0
+      cm++; if (cm > 12) { cm = 1; cy++ }
+    }
+  }
+  let acumulado = 0
+  const evolucaoMensal = Object.keys(mesMap).sort().map((key) => {
+    const saldoMes = mesMap[key]
+    acumulado += saldoMes
+    return {
+      mes: `${String(parseInt(key.slice(5), 10)).padStart(2, '0')}/${key.slice(2, 4)}`,
+      saldoVencido: acumulado,
+      saldoMes,
+    }
+  })
+
+  // Composição da carteira
+  const saldoTotalAberto = titulosAbertos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalVencido = titulosVencidos.reduce((s, t) => s + t.saldoAtual, 0)
+  const saldoTotalJuridico = titulosVencidos.filter((t) => t.inadimplencia === '3').reduce((s, t) => s + t.saldoAtual, 0)
+  const absJuridico = Math.abs(saldoTotalJuridico)
+  const absVencido  = Math.abs(saldoTotalVencido)
+  const composicaoCarteira = [
+    { name: 'Jurídico',      value: absJuridico,                          fill: '#dc2626' },
+    { name: 'Total Vencido', value: Math.max(0, absVencido - absJuridico), fill: '#c2410c' },
+    { name: 'Total em Dia',  value: Math.max(0, saldoTotalAberto - absVencido), fill: '#2563eb' },
+  ]
+
+  return {
+    clientesPorFaixaAtraso: Object.values(faixaBuckets),
+    evolucaoMensal,
+    maioresDevedores: devedoresOrdenados.slice(0, 10),
+    todosDevedores: devedoresOrdenados,
+    composicaoCarteira,
+  }
+}

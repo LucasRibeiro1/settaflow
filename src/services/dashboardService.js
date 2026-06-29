@@ -37,7 +37,7 @@ export const dashboardService = {
       tratativaService.getTratativas(),
     ])
 
-    return computeDashboard(clientes, titulos, tratativas)
+    return { ...computeDashboard(clientes, titulos, tratativas), rawClientes: clientes, rawTitulos: titulos }
   },
 
   // Fila de cobrança: tratativas com DTPROX = hoje (busca global com range de clientes)

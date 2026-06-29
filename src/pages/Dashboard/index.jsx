@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import {
@@ -10,9 +10,17 @@ import { Card, CardHeader } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { useApi } from '../../hooks/useApi'
 import { dashboardService } from '../../services/dashboardService'
+import { computeChartsFiltered } from '../../utils/apiMappers'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { formatCurrency } from '../../utils/formatters'
 import './Dashboard.css'
+
+const FILTRO_OPTIONS = [
+  { value: 'todos',  label: 'Todos' },
+  { value: '1',      label: 'Normal' },
+  { value: '2',      label: 'Externa' },
+  { value: '3',      label: 'Jurídico' },
+]
 
 function ComposicaoCarteiraChart({ composicaoCarteira, percInadimplencia }) {
   const formatShort = (v) => {
@@ -113,6 +121,7 @@ export default function Dashboard() {
   const { theme } = useApp()
   const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0'
   const [rankPage, setRankPage] = useState(1)
+  const [filtroInadimplencia, setFiltroInadimplencia] = useState('todos')
 
   if (loading || !data) {
     return (
@@ -128,9 +137,14 @@ export default function Dashboard() {
   }
 
   const {
-    resumo, composicaoCarteira, percInadimplencia,
-    clientesPorFaixaAtraso, clientesPorStatus, evolucaoMensal, maioresDevedores, todosDevedores,
+    resumo, percInadimplencia, clientesPorStatus,
+    rawClientes, rawTitulos,
   } = data
+
+  const { clientesPorFaixaAtraso, evolucaoMensal, maioresDevedores, todosDevedores, composicaoCarteira } = useMemo(
+    () => computeChartsFiltered(rawClientes || [], rawTitulos || [], filtroInadimplencia),
+    [rawClientes, rawTitulos, filtroInadimplencia],
+  )
   const saldoTotalJuridico = resumo.saldoTotalJuridico ?? 0
 
   const rankTotal = todosDevedores?.length ?? 0
@@ -196,6 +210,7 @@ export default function Dashboard() {
         {/* Summary Cards */}
         <div className="grid grid-5">
           {summaryCards.map((card, i) => (
+
             <div
               key={i}
               className={`summary-card summary-card-${card.color} ${card.onClick ? 'summary-card-link' : ''}`}
@@ -208,6 +223,32 @@ export default function Dashboard() {
               <div className="summary-value">{card.value}</div>
               <div className="summary-sub">{card.sub}</div>
             </div>
+          ))}
+        </div>
+
+        {/* Filtro de Inadimplência */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Filtro dos gráficos:
+          </span>
+          {FILTRO_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { setFiltroInadimplencia(opt.value); setRankPage(1) }}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 20,
+                border: filtroInadimplencia === opt.value ? '2px solid var(--primary)' : '1px solid var(--border)',
+                background: filtroInadimplencia === opt.value ? 'var(--primary)' : 'var(--surface)',
+                color: filtroInadimplencia === opt.value ? '#fff' : 'var(--text-secondary)',
+                fontSize: '0.8rem',
+                fontWeight: filtroInadimplencia === opt.value ? 700 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {opt.label}
+            </button>
           ))}
         </div>
 
