@@ -123,6 +123,11 @@ export default function Dashboard() {
   const [rankPage, setRankPage] = useState(1)
   const [filtroInadimplencia, setFiltroInadimplencia] = useState('todos')
 
+  const chartsData = useMemo(
+    () => computeChartsFiltered(data?.rawClientes || [], data?.rawTitulos || [], filtroInadimplencia),
+    [data?.rawClientes, data?.rawTitulos, filtroInadimplencia],
+  )
+
   if (loading || !data) {
     return (
       <>
@@ -138,13 +143,9 @@ export default function Dashboard() {
 
   const {
     resumo, percInadimplencia, clientesPorStatus,
-    rawClientes, rawTitulos,
   } = data
 
-  const { clientesPorFaixaAtraso, evolucaoMensal, maioresDevedores, todosDevedores, composicaoCarteira } = useMemo(
-    () => computeChartsFiltered(rawClientes || [], rawTitulos || [], filtroInadimplencia),
-    [rawClientes, rawTitulos, filtroInadimplencia],
-  )
+  const { clientesPorFaixaAtraso, evolucaoMensal, maioresDevedores, todosDevedores, composicaoCarteira } = chartsData
   const saldoTotalJuridico = resumo.saldoTotalJuridico ?? 0
 
   const rankTotal = todosDevedores?.length ?? 0
