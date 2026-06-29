@@ -134,6 +134,17 @@ export const clienteService = {
     return data
   },
 
+  async alterarContatoFinanceiro(codigo, loja, { telefone, email }) {
+    // TODO: substituir pela URL real quando o endpoint estiver disponível
+    const { data } = await protheusApi.post('/rest/STWS019A1/alterarcontatofin', {
+      cCODCLI: String(codigo).trim(),
+      cLoja:   String(loja).trim(),
+      cTelFin: String(telefone || ''),
+      cEmailFin: String(email || ''),
+    })
+    return data
+  },
+
   invalidateCache() {
     _cache = null
     _cachePromise = null

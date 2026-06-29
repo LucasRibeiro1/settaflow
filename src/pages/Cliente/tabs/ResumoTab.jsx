@@ -19,11 +19,28 @@ export function ResumoTab({ cliente }) {
   const { addToast } = useToast()
   const [observacoes, setObservacoes] = useState(cliente.observacoes || '')
   const [saving, setSaving] = useState(false)
+  const [contatoFin, setContatoFin] = useState({
+    telefone: cliente.telefoneFinanceiro || '',
+    email: cliente.emailFinanceiro || '',
+  })
+  const [savingFin, setSavingFin] = useState(false)
 
   const saldoDisponivel = cliente.limiteCredito - cliente.valorTotalAberto
   const atrasoMedio = cliente.atrasoMedio ?? 0
   const somaValorVencido = cliente.somaValorVencido ?? 0
   const somaValorDiasAtraso = cliente.somaValorDiasAtraso ?? 0
+
+  const handleSaveContatoFin = async () => {
+    setSavingFin(true)
+    try {
+      await clienteService.alterarContatoFinanceiro(cliente.codigo, cliente.loja, contatoFin)
+      addToast('Contato financeiro salvo com sucesso.', 'success')
+    } catch {
+      addToast('Erro ao salvar contato financeiro.', 'error')
+    } finally {
+      setSavingFin(false)
+    }
+  }
 
   const handleSaveObs = async () => {
     setSaving(true)
@@ -97,12 +114,12 @@ export function ResumoTab({ cliente }) {
         </Card>
 
         <Card>
-          <CardHeader title="Contatos" />
+          <CardHeader title="Contato Comercial" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <span className="info-field-label">Telefones</span>
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {cliente.telefones?.map((tel, i) => (
+                {cliente.telefones?.length ? cliente.telefones.map((tel, i) => (
                   <a
                     key={i}
                     href={`tel:${tel}`}
@@ -116,13 +133,13 @@ export function ResumoTab({ cliente }) {
                   >
                     📞 {tel}
                   </a>
-                ))}
+                )) : <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>—</span>}
               </div>
             </div>
             <div>
               <span className="info-field-label">E-mails</span>
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {cliente.emails?.map((email, i) => (
+                {cliente.emails?.length ? cliente.emails.map((email, i) => (
                   <a
                     key={i}
                     href={`mailto:${email}`}
@@ -136,12 +153,48 @@ export function ResumoTab({ cliente }) {
                   >
                     📧 {email}
                   </a>
-                ))}
+                )) : <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>—</span>}
               </div>
             </div>
           </div>
         </Card>
       </div>
+
+      {/* Contato Financeiro editável */}
+      <Card>
+        <CardHeader
+          title="Contato Financeiro"
+          actions={
+            <Button variant="primary" size="sm" onClick={handleSaveContatoFin} loading={savingFin}>
+              Salvar
+            </Button>
+          }
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <span className="info-field-label">Telefone</span>
+            <input
+              type="tel"
+              className="obs-textarea"
+              style={{ marginTop: 6, height: 'auto', padding: '8px 12px', resize: 'none', fontFamily: 'inherit' }}
+              value={contatoFin.telefone}
+              onChange={(e) => setContatoFin((p) => ({ ...p, telefone: e.target.value }))}
+              placeholder="Ex: (62) 99999-0000"
+            />
+          </div>
+          <div>
+            <span className="info-field-label">E-mail</span>
+            <input
+              type="email"
+              className="obs-textarea"
+              style={{ marginTop: 6, height: 'auto', padding: '8px 12px', resize: 'none', fontFamily: 'inherit' }}
+              value={contatoFin.email}
+              onChange={(e) => setContatoFin((p) => ({ ...p, email: e.target.value }))}
+              placeholder="Ex: financeiro@empresa.com.br"
+            />
+          </div>
+        </div>
+      </Card>
 
       {/* Observações editáveis */}
       <Card>

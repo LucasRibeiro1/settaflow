@@ -246,7 +246,7 @@ export default function Dashboard() {
         </div>
 
         {/* Linha 2: Histórico tela toda */}
-        <Card padding={false} style={{ marginBottom: 24 }}>
+        <Card padding={false} style={{ marginBottom: 40 }}>
           <CardHeader
             title="Histórico de Contas a Receber em Atraso"
             subtitle="Barras: saldo do mês · Linha: acumulado (data reprogramada)"
@@ -268,7 +268,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Top 10 — barras horizontais largura total */}
-        <Card padding={false} style={{ marginBottom: 24 }}>
+        <Card padding={false} style={{ marginBottom: 40 }}>
           <CardHeader
             title="Top 10 Maiores Devedores"
             subtitle="Saldo em aberto por cliente — clique na barra para ver detalhes"

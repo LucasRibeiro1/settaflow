@@ -80,6 +80,8 @@ export function mapCliente(raw) {
     emails,
     telefones,
     contato: String(raw.CONTATO ?? raw.contato ?? '').trim(),
+    telefoneFinanceiro: String(raw.TELFINANCEIRO ?? raw.telfinanceiro ?? '').trim(),
+    emailFinanceiro: String(raw.EMAILFINANCEIRO ?? raw.emailfinanceiro ?? '').trim(),
     limiteCredito: parseFloat(raw.LIMITECREDITO ?? raw.limitecredito ?? 0) || 0,
     risco: String(raw.RISCO ?? raw.risco ?? '').trim(),
     vendedor: String(raw.VENDEDOR ?? raw.vendedor ?? '').trim(),
