@@ -245,55 +245,27 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Linha 2: Histórico + Status */}
-        <div className="grid grid-2" style={{ marginBottom: 24 }}>
-          <Card padding={false}>
-            <CardHeader
-              title="Histórico de Contas a Receber em Atraso"
-              subtitle="Barras: saldo do mês · Linha: acumulado (data reprogramada)"
-            />
-            <div style={{ padding: '0 16px 16px' }}>
-              <ResponsiveContainer width="100%" height={220}>
-                <ComposedChart data={evolucaoMensal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
-                  <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis yAxisId="left" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <YAxis yAxisId="right" orientation="right" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                  <Tooltip content={<CustomTooltipCurrency />} />
-                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                  <Bar yAxisId="left" dataKey="saldoMes" name="Saldo do Mês" fill="#f59e0b" opacity={0.75} radius={[3, 3, 0, 0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="saldoVencido" name="Acumulado" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-
-          <Card padding={false}>
-            <CardHeader title="Clientes por Status de Cobrança" subtitle="Distribuição atual" />
-            <div style={{ padding: '0 16px 16px' }}>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={clientesPorStatus}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    dataKey="quantidade"
-                    nameKey="status"
-                    paddingAngle={3}
-                  >
-                    {clientesPorStatus.map((entry, i) => (
-                      <Cell key={i} fill={entry.cor} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--border)' }} />
-                  <Legend iconSize={10} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </div>
+        {/* Linha 2: Histórico tela toda */}
+        <Card padding={false} style={{ marginBottom: 24 }}>
+          <CardHeader
+            title="Histórico de Contas a Receber em Atraso"
+            subtitle="Barras: saldo do mês · Linha: acumulado (data reprogramada)"
+          />
+          <div style={{ padding: '0 24px 20px' }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={evolucaoMensal}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
+                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                <YAxis yAxisId="left" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis yAxisId="right" orientation="right" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <Tooltip content={<CustomTooltipCurrency />} />
+                <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="left" dataKey="saldoMes" name="Saldo do Mês" fill="#f59e0b" opacity={0.75} radius={[3, 3, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="saldoVencido" name="Acumulado" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
 
         {/* Top 10 — barras horizontais largura total */}
         <Card padding={false} style={{ marginBottom: 24 }}>
@@ -333,10 +305,7 @@ export default function Dashboard() {
                   style={{ cursor: 'pointer' }}
                 >
                   {maioresDevedores.map((_, i) => (
-                    <Cell
-                      key={i}
-                      fill={i === 0 ? '#dc2626' : i === 1 ? '#ef4444' : i <= 3 ? '#f97316' : '#2563eb'}
-                    />
+                    <Cell key={i} fill="#2563eb" />
                   ))}
                 </Bar>
               </BarChart>

@@ -1,6 +1,6 @@
 import protheusApi from './protheusApi'
 import { mockTitulosGlobal } from '../mocks/titulos'
-import { extractArray, mapTitulo } from '../utils/apiMappers'
+import { extractArray, mapTitulo, isTituloValido } from '../utils/apiMappers'
 
 const USE_MOCK = false
 
@@ -63,7 +63,7 @@ export const tituloService = {
     if (USE_MOCK) return mockTitulosGlobal
 
     const raw = await fetchRaw()
-    return raw.map((r) => mapTitulo(r, null))
+    return raw.map((r) => mapTitulo(r, null)).filter(isTituloValido)
   },
 
   // Títulos enriquecidos com nome do cliente — para a página Consulta de Títulos

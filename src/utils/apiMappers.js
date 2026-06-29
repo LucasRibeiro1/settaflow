@@ -159,7 +159,7 @@ export function mapTitulo(raw, clienteMap) {
 // Replica filtros da query SQL: E1_TIPO NOT IN('RA','NCC') e E1_EMISSAO >= '20170101'
 const TIPOS_EXCLUIDOS = new Set(['RA', 'NCC'])
 const EMISSAO_MIN = new Date(2017, 0, 1)
-function isTituloValido(t) {
+export function isTituloValido(t) {
   if (TIPOS_EXCLUIDOS.has((t.tipo ?? '').trim().toUpperCase())) return false
   if (t.emissao && t.emissao < EMISSAO_MIN) return false
   return true
