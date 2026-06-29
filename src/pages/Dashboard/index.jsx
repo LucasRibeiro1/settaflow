@@ -191,9 +191,10 @@ export default function Dashboard() {
     <>
       <Header title="Dashboard" subtitle="Visão executiva da carteira de inadimplência" />
       <div className="page-content fade-in">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
         {/* Summary Cards */}
-        <div className="grid grid-5" style={{ marginBottom: 24 }}>
+        <div className="grid grid-5">
           {summaryCards.map((card, i) => (
             <div
               key={i}
@@ -211,7 +212,7 @@ export default function Dashboard() {
         </div>
 
         {/* Linha 1: Aging de Clientes + Composição da Carteira */}
-        <div className="grid grid-2" style={{ marginBottom: 24 }}>
+        <div className="grid grid-2">
           <Card padding={false}>
             <CardHeader
               title="Aging de Clientes"
@@ -246,7 +247,7 @@ export default function Dashboard() {
         </div>
 
         {/* Linha 2: Histórico tela toda */}
-        <Card padding={false} style={{ marginBottom: 40 }}>
+        <Card padding={false}>
           <CardHeader
             title="Histórico de Contas a Receber em Atraso"
             subtitle="Barras: saldo do mês · Linha: acumulado (data reprogramada)"
@@ -268,7 +269,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Top 10 — barras horizontais largura total */}
-        <Card padding={false} style={{ marginBottom: 40 }}>
+        <Card padding={false}>
           <CardHeader
             title="Top 10 Maiores Devedores"
             subtitle="Saldo em aberto por cliente — clique na barra para ver detalhes"
@@ -377,6 +378,7 @@ export default function Dashboard() {
           )}
         </Card>
 
+      </div>
       </div>
     </>
   )
