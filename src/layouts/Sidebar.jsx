@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/carteira', label: 'Carteira de Cobrança', icon: '📋' },
   { to: '/minha-fila', label: 'Minha Fila', icon: '⚡' },
   { to: '/titulos', label: 'Consulta de Títulos', icon: '🗂' },
+  { to: '/juridico', label: 'Títulos Jurídico', icon: '⚖️' },
   { to: '/tratativas', label: 'Tratativas', icon: '💬' },
   { to: '/acordos', label: 'Acordos', icon: '🤝' },
   { to: '/relatorios', label: 'Relatórios', icon: '📊' },
