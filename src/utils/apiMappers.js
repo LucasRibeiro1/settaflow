@@ -222,6 +222,9 @@ const STATUS_CONFIG = {
   sem_acordo:         { label: 'Sem Acordo',      cor: '#dc2626' },
 }
 
+// Grupos em que cada cliente é exibido individualmente pelo nome (não agrupa pelo grupo)
+const GRUPOS_INDIVIDUAIS = new Set(['CLIENTES INDIVIDUAIS'])
+
 export function computeDashboard(clientes, titulos, tratativas = []) {
   // SQL já garante E1_SALDO > 0 no WHERE; IS-/IN- retornam saldo negativo da API
   const titulosAbertos = titulos.filter((t) => isTituloValido(t))
@@ -231,9 +234,9 @@ export function computeDashboard(clientes, titulos, tratativas = []) {
   const limiteCreditoTotal = clientes.reduce((s, c) => s + c.limiteCredito, 0)
   const valorTotalAberto = clientesComAtraso.reduce((s, c) => s + c.valorTotalAberto, 0)
 
-  // Card "Clientes Inadimplentes": grupos 000001 e 000027 contam por cliente;
+  // Card "Clientes Inadimplentes": grupos individuais contam por cliente;
   // demais grupos contam uma vez por grupo (clientes sem grupo contam individualmente)
-  const GRUPOS_POR_CLIENTE = new Set(['000001', '000027'])
+  const GRUPOS_POR_CLIENTE = GRUPOS_INDIVIDUAIS
   const gruposJaContados = new Set()
   let totalClientesInadimplentes = 0
   for (const c of clientesComAtraso) {
@@ -432,13 +435,28 @@ export function computeChartsFiltered(clientes, titulos, filtro) {
     faixaBuckets[key].valor += agg.saldo
   }
 
-  // Maiores devedores
-  const devedoresOrdenados = Object.values(clienteAgg)
-    .sort((a, b) => b.saldo - a.saldo)
-    .map((agg) => {
-      const c = clienteMap[agg.id] || {}
-      return { id: agg.id, nome: c.nomeFantasia || c.razaoSocial || agg.codigo, valor: agg.saldo, diasAtraso: agg.diasMax }
-    })
+  // Maiores devedores — clientes individuais pelo nome; demais grupos agrupados pelo nome do grupo
+  const devedorMap = {}
+  for (const [clienteId, agg] of Object.entries(clienteAgg)) {
+    const c = clienteMap[clienteId] || {}
+    const grupo = c.grupoCliente && c.grupoCliente !== '—' ? c.grupoCliente : null
+    const isIndividual = !grupo || GRUPOS_INDIVIDUAIS.has(grupo)
+    const key = isIndividual ? clienteId : `grupo:${grupo}`
+
+    if (!devedorMap[key]) {
+      devedorMap[key] = {
+        id: isIndividual ? clienteId : null,
+        nome: isIndividual ? (c.nomeFantasia || c.razaoSocial || agg.codigo) : grupo,
+        valor: 0,
+        diasAtraso: 0,
+        isGrupo: !isIndividual,
+      }
+    }
+    devedorMap[key].valor    += agg.saldo
+    devedorMap[key].diasAtraso = Math.max(devedorMap[key].diasAtraso, agg.diasMax)
+  }
+
+  const devedoresOrdenados = Object.values(devedorMap).sort((a, b) => b.valor - a.valor)
 
   // Histórico mensal
   const mesMap = {}

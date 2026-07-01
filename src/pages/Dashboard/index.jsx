@@ -344,7 +344,7 @@ export default function Dashboard() {
                   dataKey="valor"
                   name="Saldo em Aberto"
                   radius={[0, 6, 6, 0]}
-                  onClick={(d) => navigate(`/carteira/${d.id}`)}
+                  onClick={(d) => d.id && navigate(`/carteira/${d.id}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   {maioresDevedores.map((_, i) => (
@@ -377,7 +377,7 @@ export default function Dashboard() {
                 {rankData.map((d, i) => {
                   const pos = (rankPage - 1) * RANK_PAGE_SIZE + i + 1
                   return (
-                    <tr key={d.id} onClick={() => navigate(`/carteira/${d.id}`)} className="row-clickable">
+                    <tr key={d.id ?? d.nome} onClick={() => d.id && navigate(`/carteira/${d.id}`)} className={d.id ? 'row-clickable' : ''}>
                       <td>
                         <span className={`rank-badge rank-${Math.min(pos, 3)}`}>{pos}º</span>
                       </td>
