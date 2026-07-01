@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, PieChart, Pie, Cell, Legend, BarChart,
+  LineChart, PieChart, Pie, Cell, Legend, BarChart, LabelList,
 } from 'recharts'
 import { Header } from '../../layouts/Header'
 import { Card, CardHeader } from '../../components/ui/Card'
@@ -322,7 +322,7 @@ export default function Dashboard() {
                 layout="vertical"
                 data={maioresDevedores}
                 barSize={18}
-                margin={{ top: 4, right: 80, left: 8, bottom: 4 }}
+                margin={{ top: 4, right: 110, left: 8, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
                 <XAxis type="number" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -350,6 +350,12 @@ export default function Dashboard() {
                   {maioresDevedores.map((_, i) => (
                     <Cell key={i} fill="#2563eb" />
                   ))}
+                  <LabelList
+                    dataKey="valor"
+                    position="right"
+                    formatter={formatShortCurrency}
+                    style={{ fill: '#2563eb', fontSize: 11, fontWeight: 600 }}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
