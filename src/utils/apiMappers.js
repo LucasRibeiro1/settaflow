@@ -127,9 +127,12 @@ export function mapTitulo(raw, clienteMap) {
   const numero = String(raw.TITULO ?? raw.NUMERO ?? raw.numero ?? '').trim()
   const prefixo = String(raw.PREFIXO ?? raw.prefixo ?? '').trim()
   const parcela = String(raw.PARCELA ?? raw.parcela ?? '').trim()
+  const tipo = String(raw.TIPO ?? raw.ESPECIE ?? raw.especie ?? '').trim() || '—'
 
   return {
-    id: `${empresa}-${prefixo}-${numero}-${parcela}-${codcli}-${loja}-${raw.VENCIMENTO ?? raw.DTVENCTO ?? ''}`,
+    // Inclui tipo: título (NF) e juros/multa (IN-) do mesmo acordo compartilham
+    // prefixo+numero+parcela+vencimento, e sem o tipo colidiam na mesma chave React
+    id: `${empresa}-${prefixo}-${numero}-${parcela}-${tipo}-${codcli}-${loja}-${raw.VENCIMENTO ?? raw.DTVENCTO ?? ''}`,
     filial: empresa,
     clienteId: clienteKey,
     clienteCodigo: codcli,
@@ -138,7 +141,7 @@ export function mapTitulo(raw, clienteMap) {
     prefixo,
     titulo: numero,
     parcela,
-    tipo: String(raw.TIPO ?? raw.ESPECIE ?? raw.especie ?? '').trim() || '—',
+    tipo,
     emissao,
     vencimentoOriginal,
     vencimentoReal,
