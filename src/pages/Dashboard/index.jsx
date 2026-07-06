@@ -300,12 +300,19 @@ export default function Dashboard() {
           />
           <div style={{ padding: '0 24px 20px' }}>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={evolucaoMensalComReal}>
+              <BarChart data={evolucaoMensalComReal} margin={{ top: 24 }} barSize={22}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
                 <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <YAxis tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <Tooltip content={<CustomTooltipCurrency />} />
-                <Bar dataKey="valorVencidoReal" name="Vencido Real" fill="#2563eb" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="valorVencidoReal" name="Vencido Real" fill="#2563eb" radius={[3, 3, 0, 0]}>
+                  <LabelList
+                    dataKey="valorVencidoReal"
+                    position="top"
+                    formatter={formatShortCurrency}
+                    style={{ fill: '#2563eb', fontSize: 11, fontWeight: 600 }}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
