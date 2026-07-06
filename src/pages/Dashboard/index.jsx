@@ -117,6 +117,7 @@ const RANK_PAGE_SIZE = 10
 
 export default function Dashboard() {
   const { data, loading } = useApi(() => dashboardService.getDashboard())
+  const { data: historicoVencidosReal } = useApi(() => dashboardService.getHistoricoVencidosReal())
   const navigate = useNavigate()
   const { theme } = useApp()
   const chartGridColor = theme === 'dark' ? '#334155' : '#e2e8f0'
@@ -127,6 +128,12 @@ export default function Dashboard() {
     () => computeChartsFiltered(data?.rawClientes || [], data?.rawTitulos || [], filtroInadimplencia),
     [data?.rawClientes, data?.rawTitulos, filtroInadimplencia],
   )
+
+  // Mescla o histórico real (STWS025, independe de baixa) no gráfico por mês
+  const evolucaoMensalComReal = useMemo(() => {
+    const porMes = Object.fromEntries((historicoVencidosReal || []).map((h) => [h.mes, h.valorVencidoReal]))
+    return (chartsData.evolucaoMensal || []).map((e) => ({ ...e, valorVencidoReal: porMes[e.mes] }))
+  }, [chartsData.evolucaoMensal, historicoVencidosReal])
 
   if (loading || !data) {
     return (
@@ -145,7 +152,7 @@ export default function Dashboard() {
     resumo, percInadimplencia, clientesPorStatus,
   } = data
 
-  const { clientesPorFaixaAtraso, evolucaoMensal, maioresDevedores, todosDevedores, composicaoCarteira } = chartsData
+  const { clientesPorFaixaAtraso, maioresDevedores, todosDevedores, composicaoCarteira } = chartsData
   const saldoTotalJuridico = resumo.saldoTotalJuridico ?? 0
 
   const rankTotal = todosDevedores?.length ?? 0
@@ -292,11 +299,11 @@ export default function Dashboard() {
         <Card padding={false}>
           <CardHeader
             title="Histórico de Contas a Receber em Atraso"
-            subtitle="Barras: saldo do mês · Linha: acumulado (data reprogramada)"
+            subtitle="Barras: saldo do mês · Linhas: acumulado (data reprogramada) e vencido real (independe de baixa)"
           />
           <div style={{ padding: '0 24px 20px' }}>
             <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={evolucaoMensal}>
+              <ComposedChart data={evolucaoMensalComReal}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
                 <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <YAxis yAxisId="left" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
@@ -305,6 +312,7 @@ export default function Dashboard() {
                 <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                 <Bar yAxisId="left" dataKey="saldoMes" name="Saldo do Mês" fill="#f59e0b" opacity={0.75} radius={[3, 3, 0, 0]} />
                 <Line yAxisId="right" type="monotone" dataKey="saldoVencido" name="Acumulado" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
+                <Line yAxisId="right" type="monotone" dataKey="valorVencidoReal" name="Vencido Real (s/ baixa)" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

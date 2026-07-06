@@ -1,9 +1,10 @@
 import { mockDashboard } from '../mocks/dashboard'
+import protheusApi from './protheusApi'
 import { clienteService } from './clienteService'
 import { tituloService } from './tituloService'
 import { tratativaService } from './tratativaService'
 import { acordoService } from './acordoService'
-import { computeDashboard } from '../utils/apiMappers'
+import { computeDashboard, extractArray, parseProtheusDate } from '../utils/apiMappers'
 
 const USE_MOCK = false
 
@@ -117,6 +118,20 @@ export const dashboardService = {
         }
       })
       .sort((a, b) => b.valorNegociado - a.valorNegociado)
+  },
+
+  // Histórico real de vencidos por mês (independente de baixa/pagamento) — STWS025
+  async getHistoricoVencidosReal() {
+    const { data } = await protheusApi.get('/rest/STWS025/listar/')
+
+    return extractArray(data)
+      .map((r) => {
+        const dataRef = parseProtheusDate(r.DATA ?? r.data)
+        if (!dataRef) return null
+        const mes = `${String(dataRef.getMonth() + 1).padStart(2, '0')}/${String(dataRef.getFullYear()).slice(2, 4)}`
+        return { mes, valorVencidoReal: parseFloat(r.VALOR ?? r.valor) || 0 }
+      })
+      .filter(Boolean)
   },
 
   // Títulos que vencem exatamente hoje
