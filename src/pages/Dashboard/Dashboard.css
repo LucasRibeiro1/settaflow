@@ -154,10 +154,7 @@
   font-size: 0.7rem;
   font-weight: 700;
 }
-.rank-1 { background: #fef3c7; color: #92400e; }
-.rank-2 { background: var(--border); color: var(--text-secondary); }
-.rank-3 { background: #fef3c7; color: #78350f; }
-.rank-4, .rank-5 { background: var(--border); color: var(--text-muted); }
+.rank-1, .rank-2, .rank-3 { background: var(--primary-50); color: var(--primary); }
 
 .devedor-nome { font-weight: 600; color: var(--text-primary) !important; }
 .devedor-valor { font-weight: 700; color: var(--danger) !important; }
