@@ -123,7 +123,7 @@ export const dashboardService = {
   // Histórico real de vencidos por mês (independente de baixa/pagamento) — STWS025
   // A API retorna a data no formato YYYYMMDD; considera-se apenas mês/ano.
   async getHistoricoVencidosReal() {
-    const { data } = await protheusApi.get('/rest/STWS025/listar/')
+    const { data } = await protheusApi.get('/rest/STWS025/listar')
 
     return extractArray(data)
       .map((r) => {
