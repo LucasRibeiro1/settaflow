@@ -121,6 +121,7 @@ export const dashboardService = {
   },
 
   // Histórico real de vencidos por mês (independente de baixa/pagamento) — STWS025
+  // A API retorna a data no formato YYYYMMDD; considera-se apenas mês/ano.
   async getHistoricoVencidosReal() {
     const { data } = await protheusApi.get('/rest/STWS025/listar/')
 
@@ -128,10 +129,17 @@ export const dashboardService = {
       .map((r) => {
         const dataRef = parseProtheusDate(r.DATA ?? r.data)
         if (!dataRef) return null
-        const mes = `${String(dataRef.getMonth() + 1).padStart(2, '0')}/${String(dataRef.getFullYear()).slice(2, 4)}`
-        return { mes, valorVencidoReal: parseFloat(r.VALOR ?? r.valor) || 0 }
+        const ano = dataRef.getFullYear()
+        const mesNum = dataRef.getMonth() + 1
+        return {
+          mes: `${String(mesNum).padStart(2, '0')}/${String(ano).slice(2, 4)}`,
+          ano,
+          mesNum,
+          valorVencidoReal: parseFloat(r.VALOR ?? r.valor) || 0,
+        }
       })
       .filter(Boolean)
+      .sort((a, b) => a.ano - b.ano || a.mesNum - b.mesNum)
   },
 
   // Títulos que vencem exatamente hoje

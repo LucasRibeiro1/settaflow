@@ -129,10 +129,15 @@ export default function Dashboard() {
     [data?.rawClientes, data?.rawTitulos, filtroInadimplencia],
   )
 
-  // Mescla o histórico real (STWS025, independe de baixa) no gráfico por mês
+  // Histórico do gráfico: meses vêm da STWS025 (inclui títulos já baixados/pagos),
+  // saldo do mês vem do cálculo local (só títulos ainda em aberto)
   const evolucaoMensalComReal = useMemo(() => {
-    const porMes = Object.fromEntries((historicoVencidosReal || []).map((h) => [h.mes, h.valorVencidoReal]))
-    return (chartsData.evolucaoMensal || []).map((e) => ({ ...e, valorVencidoReal: porMes[e.mes] }))
+    const saldoMesPorMes = Object.fromEntries((chartsData.evolucaoMensal || []).map((e) => [e.mes, e.saldoMes]))
+    return (historicoVencidosReal || []).map((h) => ({
+      mes: h.mes,
+      saldoMes: saldoMesPorMes[h.mes] ?? 0,
+      valorVencidoReal: h.valorVencidoReal,
+    }))
   }, [chartsData.evolucaoMensal, historicoVencidosReal])
 
   if (loading || !data) {
