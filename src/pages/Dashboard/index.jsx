@@ -397,7 +397,7 @@ export default function Dashboard() {
                       </td>
                       <td className="devedor-nome">{d.nome}</td>
                       <td>
-                        <Badge type={d.diasAtraso > 120 ? 'danger' : d.diasAtraso > 60 ? 'warning' : 'info'}>
+                        <Badge type="danger">
                           {d.diasAtraso} dias
                         </Badge>
                       </td>
