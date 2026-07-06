@@ -299,7 +299,7 @@ export default function Dashboard() {
         <Card padding={false}>
           <CardHeader
             title="Histórico de Contas a Receber em Atraso"
-            subtitle="Barras: saldo do mês · Linhas: acumulado (data reprogramada) e vencido real (independe de baixa)"
+            subtitle="Barras: saldo do mês · Linha: vencido real por mês (independe de baixa)"
           />
           <div style={{ padding: '0 24px 20px' }}>
             <ResponsiveContainer width="100%" height={260}>
@@ -311,8 +311,7 @@ export default function Dashboard() {
                 <Tooltip content={<CustomTooltipCurrency />} />
                 <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                 <Bar yAxisId="left" dataKey="saldoMes" name="Saldo do Mês" fill="#f59e0b" opacity={0.75} radius={[3, 3, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="saldoVencido" name="Acumulado" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} />
-                <Line yAxisId="right" type="monotone" dataKey="valorVencidoReal" name="Vencido Real (s/ baixa)" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} connectNulls />
+                <Line yAxisId="right" type="monotone" dataKey="valorVencidoReal" name="Vencido Real" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} connectNulls />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
