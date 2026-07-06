@@ -129,16 +129,8 @@ export default function Dashboard() {
     [data?.rawClientes, data?.rawTitulos, filtroInadimplencia],
   )
 
-  // Histórico do gráfico: meses vêm da STWS025 (inclui títulos já baixados/pagos),
-  // saldo do mês vem do cálculo local (só títulos ainda em aberto)
-  const evolucaoMensalComReal = useMemo(() => {
-    const saldoMesPorMes = Object.fromEntries((chartsData.evolucaoMensal || []).map((e) => [e.mes, e.saldoMes]))
-    return (historicoVencidosReal || []).map((h) => ({
-      mes: h.mes,
-      saldoMes: saldoMesPorMes[h.mes] ?? 0,
-      valorVencidoReal: h.valorVencidoReal,
-    }))
-  }, [chartsData.evolucaoMensal, historicoVencidosReal])
+  // Histórico do gráfico: meses e valores vêm da STWS025 (inclui títulos já baixados/pagos)
+  const evolucaoMensalComReal = historicoVencidosReal || []
 
   if (loading || !data) {
     return (
@@ -304,20 +296,17 @@ export default function Dashboard() {
         <Card padding={false}>
           <CardHeader
             title="Histórico de Contas a Receber em Atraso"
-            subtitle="Barras: saldo do mês · Linha: vencido real por mês (independe de baixa)"
+            subtitle="Vencido real por mês (independe de baixa)"
           />
           <div style={{ padding: '0 24px 20px' }}>
             <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={evolucaoMensalComReal}>
+              <BarChart data={evolucaoMensalComReal}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
                 <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <YAxis yAxisId="left" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <YAxis yAxisId="right" orientation="right" tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis tickFormatter={formatShortCurrency} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <Tooltip content={<CustomTooltipCurrency />} />
-                <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="left" dataKey="saldoMes" name="Saldo do Mês" fill="#f59e0b" opacity={0.75} radius={[3, 3, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="valorVencidoReal" name="Vencido Real" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 5 }} connectNulls />
-              </ComposedChart>
+                <Bar dataKey="valorVencidoReal" name="Vencido Real" fill="#2563eb" radius={[3, 3, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
