@@ -8,11 +8,14 @@ export async function proxyToProtheus(request, params, { baseUrl, prefix }) {
 
   const target = `${baseUrl}${prefix}/${path}${url.search}`
 
-  const headers = new Headers()
-  const auth = request.headers.get('authorization')
-  const contentType = request.headers.get('content-type')
-  if (auth) headers.set('authorization', auth)
-  if (contentType) headers.set('content-type', contentType)
+  // Repassa todos os headers originais (Accept, User-Agent, Authorization, etc.) —
+  // exceto host/content-length, que precisam ser recalculados pro destino.
+  const headers = new Headers(request.headers)
+  headers.delete('host')
+  headers.delete('content-length')
+  headers.delete('cf-connecting-ip')
+  headers.delete('cf-ray')
+  headers.delete('cf-visitor')
 
   const hasBody = !['GET', 'HEAD'].includes(request.method)
 
