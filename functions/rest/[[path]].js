@@ -1,9 +1,11 @@
 import { proxyToProtheus } from '../_shared/proxy.js'
 
-// Encaminha /rest/* -> http://177.85.6.66:8091/rest/* (equivalente ao rewrite do vercel.json)
+// Encaminha /rest/* -> https://api.gruposetta.com.br/rest01/*
+// Usa hostname (em vez do IP puro) porque a Cloudflare bloqueia fetch()
+// direto pra IP com o erro 1003 (Direct IP Access Not Allowed).
 export async function onRequest({ request, params }) {
   return proxyToProtheus(request, params, {
-    baseUrl: 'http://177.85.6.66:8091',
-    prefix: '/rest',
+    baseUrl: 'https://api.gruposetta.com.br',
+    prefix: '/rest01',
   })
 }
