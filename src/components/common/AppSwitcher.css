@@ -1,0 +1,120 @@
+.app-switcher {
+  position: relative;
+}
+.app-switcher-trigger {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.app-switcher-trigger:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.app-switcher-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 4px);
+  grid-template-rows: repeat(2, 4px);
+  gap: 3px;
+}
+.app-switcher-grid span {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: #cbd5e1;
+}
+
+.app-switcher-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 270px;
+  background: #1e2536;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  padding: 12px;
+  z-index: 400;
+}
+.app-switcher-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  outline: none;
+  margin-bottom: 12px;
+  font-family: inherit;
+}
+.app-switcher-search::placeholder { color: #64748b; }
+.app-switcher-search:focus { border-color: var(--primary); }
+
+.app-switcher-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.65);
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.app-switcher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.app-switcher-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+.app-switcher-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.app-switcher-item-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+.app-switcher-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.app-switcher-item-name {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #fff;
+}
+.app-switcher-item-desc {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.app-switcher-empty {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  padding: 8px;
+}

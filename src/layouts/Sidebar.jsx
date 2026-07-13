@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
+import { AppSwitcher } from '../components/common/AppSwitcher'
 import './Sidebar.css'
 
 function initials(nome) {
@@ -9,15 +10,24 @@ function initials(nome) {
   return nome.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
-const FINANCEIRO_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: '▣' },
-  { to: '/carteira', label: 'Carteira de Cobrança', icon: '📋' },
-  { to: '/minha-fila', label: 'Minha Fila', icon: '⚡' },
-  { to: '/titulos', label: 'Consulta de Títulos', icon: '🗂' },
-  { to: '/juridico', label: 'Títulos Jurídico', icon: '⚖️' },
-  { to: '/tratativas', label: 'Tratativas', icon: '💬' },
-  { to: '/acordos', label: 'Acordos', icon: '🤝' },
-  { to: '/relatorios', label: 'Relatórios', icon: '📊' },
+const MENU_GROUPS = [
+  {
+    key: 'financeiro',
+    label: 'Financeiro',
+    icon: '💰',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', icon: '▣' },
+      { to: '/carteira', label: 'Carteira de Cobrança', icon: '📋' },
+      { to: '/minha-fila', label: 'Minha Fila', icon: '⚡' },
+      { to: '/titulos', label: 'Consulta de Títulos', icon: '🗂' },
+      { to: '/juridico', label: 'Títulos Jurídico', icon: '⚖️' },
+      { to: '/tratativas', label: 'Tratativas', icon: '💬' },
+      { to: '/acordos', label: 'Acordos', icon: '🤝' },
+      { to: '/relatorios', label: 'Relatórios', icon: '📊' },
+    ],
+  },
+  { key: 'juridico', label: 'Jurídico', icon: '🏛️', items: [] },
+  { key: 'comercial', label: 'Comercial', icon: '🧭', items: [] },
 ]
 
 export function Sidebar() {
@@ -27,12 +37,27 @@ export function Sidebar() {
   const nomeUsuario = user?.nome || user?.username || ''
   const perfilUsuario = user?.perfil || ''
 
-  const financeiroAtivo = FINANCEIRO_ITEMS.some((item) => location.pathname.startsWith(item.to))
-  const [financeiroAberto, setFinanceiroAberto] = useState(financeiroAtivo)
+  const groupActiveMap = Object.fromEntries(
+    MENU_GROUPS.map((g) => [g.key, g.items.some((item) => location.pathname.startsWith(item.to))])
+  )
+  const [openGroups, setOpenGroups] = useState(groupActiveMap)
 
   useEffect(() => {
-    if (financeiroAtivo) setFinanceiroAberto(true)
-  }, [financeiroAtivo])
+    setOpenGroups((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const g of MENU_GROUPS) {
+        if (groupActiveMap[g.key] && !prev[g.key]) {
+          next[g.key] = true
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
+
+  const toggleGroup = (key) => setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }))
 
   return (
     <aside className={[
@@ -41,6 +66,7 @@ export function Sidebar() {
       mobileSidebarOpen ? 'sidebar-mobile-open' : '',
     ].join(' ')}>
       <div className="sidebar-logo">
+        {!sidebarCollapsed && <AppSwitcher />}
         {sidebarCollapsed ? (
           <img src="/logo-icon.png" alt="Setta" className="sidebar-logo-icon-img" />
         ) : (
@@ -64,37 +90,45 @@ export function Sidebar() {
           {!sidebarCollapsed && <span className="sidebar-item-label">Home</span>}
         </NavLink>
 
-        <button
-          type="button"
-          className={`sidebar-item sidebar-item-toggle ${financeiroAtivo ? 'sidebar-item-active' : ''}`}
-          onClick={() => setFinanceiroAberto((o) => !o)}
-        >
-          <span className="sidebar-item-icon">💰</span>
-          {!sidebarCollapsed && (
-            <>
-              <span className="sidebar-item-label">Financeiro</span>
-              <span className={`sidebar-item-chevron ${financeiroAberto ? 'sidebar-item-chevron-open' : ''}`}>▾</span>
-            </>
-          )}
-        </button>
+        {MENU_GROUPS.map((group) => (
+          <div key={group.key}>
+            <button
+              type="button"
+              className={`sidebar-item sidebar-item-toggle ${groupActiveMap[group.key] ? 'sidebar-item-active' : ''}`}
+              onClick={() => toggleGroup(group.key)}
+            >
+              <span className="sidebar-item-icon">{group.icon}</span>
+              {!sidebarCollapsed && (
+                <>
+                  <span className="sidebar-item-label">{group.label}</span>
+                  <span className={`sidebar-item-chevron ${openGroups[group.key] ? 'sidebar-item-chevron-open' : ''}`}>▾</span>
+                </>
+              )}
+            </button>
 
-        {!sidebarCollapsed && financeiroAberto && (
-          <div className="sidebar-submenu">
-            {FINANCEIRO_ITEMS.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={closeMobileSidebar}
-                className={({ isActive }) =>
-                  `sidebar-item sidebar-subitem ${isActive ? 'sidebar-item-active' : ''}`
-                }
-              >
-                <span className="sidebar-item-icon">{item.icon}</span>
-                <span className="sidebar-item-label">{item.label}</span>
-              </NavLink>
-            ))}
+            {!sidebarCollapsed && openGroups[group.key] && (
+              <div className="sidebar-submenu">
+                {group.items.length > 0 ? (
+                  group.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={closeMobileSidebar}
+                      className={({ isActive }) =>
+                        `sidebar-item sidebar-subitem ${isActive ? 'sidebar-item-active' : ''}`
+                      }
+                    >
+                      <span className="sidebar-item-icon">{item.icon}</span>
+                      <span className="sidebar-item-label">{item.label}</span>
+                    </NavLink>
+                  ))
+                ) : (
+                  <span className="sidebar-subitem sidebar-subitem-empty">Em breve</span>
+                )}
+              </div>
+            )}
           </div>
-        )}
+        ))}
 
         <NavLink
           to="/configuracoes"

@@ -137,6 +137,12 @@
   padding: 7px 10px;
   font-size: 0.8rem;
 }
+.sidebar-subitem-empty {
+  padding: 7px 10px;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: rgba(148,163,184,0.55);
+}
 
 .sidebar-footer {
   padding: 16px;
