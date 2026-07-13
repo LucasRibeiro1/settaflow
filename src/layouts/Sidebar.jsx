@@ -53,7 +53,11 @@ export function Sidebar() {
   const nomeUsuario = user?.nome || user?.username || ''
   const perfilUsuario = user?.perfil || ''
 
-  const visibleGroups = MENU_GROUPS.filter((g) => g.key !== 'juridico' || canAccessJuridico(user))
+  // Grupo Jurídico sempre aparece no menu; só mostra as rotinas de verdade
+  // pra quem tem permissão — os demais veem "Em breve", igual um grupo vazio.
+  const visibleGroups = MENU_GROUPS.map((g) =>
+    g.key === 'juridico' && !canAccessJuridico(user) ? { ...g, items: [] } : g
+  )
 
   const groupActiveMap = Object.fromEntries(
     visibleGroups.map((g) => [g.key, g.items.some((item) => isActivePath(location.pathname, item.to))])
