@@ -249,7 +249,7 @@ export default function TitulosJuridico() {
         subtitle={`${filtered.length} títulos encontrados · Saldo total: ${formatCurrency(totalSaldo)}`}
         breadcrumb={
           <Breadcrumb items={[
-            { to: '/', label: 'Dashboard' },
+            { to: '/dashboard', label: 'Dashboard' },
             { to: '/titulos', label: 'Consulta de Títulos' },
             { label: 'Jurídico' },
           ]} />

@@ -167,7 +167,7 @@ export default function Carteira() {
       <Header
         title="Carteira de Cobrança"
         subtitle={`${filtered.length} clientes encontrados`}
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Carteira' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Carteira' }]} />}
         actions={
           <div style={{ display: 'flex', gap: 8 }}>
             <Button variant="ghost" size="sm" icon="⬇">Excel</Button>

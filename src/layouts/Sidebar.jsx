@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import './Sidebar.css'
@@ -8,8 +9,8 @@ function initials(nome) {
   return nome.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: '▣', exact: true },
+const FINANCEIRO_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', icon: '▣' },
   { to: '/carteira', label: 'Carteira de Cobrança', icon: '📋' },
   { to: '/minha-fila', label: 'Minha Fila', icon: '⚡' },
   { to: '/titulos', label: 'Consulta de Títulos', icon: '🗂' },
@@ -17,14 +18,21 @@ const NAV_ITEMS = [
   { to: '/tratativas', label: 'Tratativas', icon: '💬' },
   { to: '/acordos', label: 'Acordos', icon: '🤝' },
   { to: '/relatorios', label: 'Relatórios', icon: '📊' },
-  { to: '/configuracoes', label: 'Configurações', icon: '⚙' },
 ]
 
 export function Sidebar() {
   const { sidebarCollapsed, mobileSidebarOpen, closeMobileSidebar } = useApp()
   const { user } = useAuth()
+  const location = useLocation()
   const nomeUsuario = user?.nome || user?.username || ''
   const perfilUsuario = user?.perfil || ''
+
+  const financeiroAtivo = FINANCEIRO_ITEMS.some((item) => location.pathname.startsWith(item.to))
+  const [financeiroAberto, setFinanceiroAberto] = useState(financeiroAtivo)
+
+  useEffect(() => {
+    if (financeiroAtivo) setFinanceiroAberto(true)
+  }, [financeiroAtivo])
 
   return (
     <aside className={[
@@ -45,20 +53,57 @@ export function Sidebar() {
 
       <nav className="sidebar-nav">
         {!sidebarCollapsed && <span className="sidebar-section-label">MENU PRINCIPAL</span>}
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.exact}
-            onClick={closeMobileSidebar}
-            className={({ isActive }) =>
-              `sidebar-item ${isActive ? 'sidebar-item-active' : ''}`
-            }
-          >
-            <span className="sidebar-item-icon">{item.icon}</span>
-            {!sidebarCollapsed && <span className="sidebar-item-label">{item.label}</span>}
-          </NavLink>
-        ))}
+
+        <NavLink
+          to="/"
+          end
+          onClick={closeMobileSidebar}
+          className={({ isActive }) => `sidebar-item ${isActive ? 'sidebar-item-active' : ''}`}
+        >
+          <span className="sidebar-item-icon">🏠</span>
+          {!sidebarCollapsed && <span className="sidebar-item-label">Home</span>}
+        </NavLink>
+
+        <button
+          type="button"
+          className={`sidebar-item sidebar-item-toggle ${financeiroAtivo ? 'sidebar-item-active' : ''}`}
+          onClick={() => setFinanceiroAberto((o) => !o)}
+        >
+          <span className="sidebar-item-icon">💰</span>
+          {!sidebarCollapsed && (
+            <>
+              <span className="sidebar-item-label">Financeiro</span>
+              <span className={`sidebar-item-chevron ${financeiroAberto ? 'sidebar-item-chevron-open' : ''}`}>▾</span>
+            </>
+          )}
+        </button>
+
+        {!sidebarCollapsed && financeiroAberto && (
+          <div className="sidebar-submenu">
+            {FINANCEIRO_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={closeMobileSidebar}
+                className={({ isActive }) =>
+                  `sidebar-item sidebar-subitem ${isActive ? 'sidebar-item-active' : ''}`
+                }
+              >
+                <span className="sidebar-item-icon">{item.icon}</span>
+                <span className="sidebar-item-label">{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
+        )}
+
+        <NavLink
+          to="/configuracoes"
+          onClick={closeMobileSidebar}
+          className={({ isActive }) => `sidebar-item ${isActive ? 'sidebar-item-active' : ''}`}
+        >
+          <span className="sidebar-item-icon">⚙</span>
+          {!sidebarCollapsed && <span className="sidebar-item-label">Configurações</span>}
+        </NavLink>
       </nav>
 
       <div className="sidebar-footer">

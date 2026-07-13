@@ -53,7 +53,7 @@ export default function Acordos() {
       <Header
         title="Acordos"
         subtitle="Negociações e parcelamentos formalizados"
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Acordos' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Acordos' }]} />}
       />
       <div className="page-content fade-in">
 

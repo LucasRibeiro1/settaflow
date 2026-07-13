@@ -45,7 +45,7 @@ export default function ClienteDetalhe() {
         subtitle={`${cliente.codigo}${cliente.loja ? `-${cliente.loja}` : ''} · ${cliente.cidade}/${cliente.uf}`}
         breadcrumb={
           <Breadcrumb items={[
-            { to: '/', label: 'Dashboard' },
+            { to: '/dashboard', label: 'Dashboard' },
             { to: '/carteira', label: 'Carteira' },
             { label: cliente.nomeFantasia || cliente.razaoSocial },
           ]} />

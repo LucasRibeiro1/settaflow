@@ -94,7 +94,7 @@ export default function Tratativas() {
       <Header
         title="Tratativas"
         subtitle={`${filtered.length} registros encontrados`}
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Tratativas' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Tratativas' }]} />}
         actions={
           <Button variant="primary" size="sm" onClick={() => setShowForm(true)} icon="＋">
             Nova Tratativa

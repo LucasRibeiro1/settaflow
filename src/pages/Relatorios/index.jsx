@@ -19,7 +19,7 @@ export default function Relatorios() {
       <Header
         title="Relatórios"
         subtitle="Relatórios gerenciais e analíticos"
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Relatórios' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Relatórios' }]} />}
       />
       <div className="page-content fade-in">
         <div className="grid grid-4">

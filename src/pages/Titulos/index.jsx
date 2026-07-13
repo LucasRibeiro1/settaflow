@@ -299,7 +299,7 @@ export default function ConsultaTitulos() {
       <Header
         title="Consulta de Títulos"
         subtitle={`${filtered.length} títulos encontrados · Saldo total: ${formatCurrency(totalSaldo)}`}
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Consulta de Títulos' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Consulta de Títulos' }]} />}
         actions={
           <div style={{ display: 'flex', gap: 8 }}>
             <Button variant="ghost" size="sm" onClick={handleExportCSV}>⬇ Excel</Button>

@@ -27,7 +27,7 @@ export default function Configuracoes() {
       <Header
         title="Configurações"
         subtitle="Parâmetros do sistema de cobrança"
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Configurações' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Configurações' }]} />}
       />
       <div className="page-content fade-in">
         <div className="grid grid-2" style={{ gap: 20 }}>

@@ -104,6 +104,33 @@
 }
 .sidebar-item-label { flex: 1; }
 
+.sidebar-item-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sidebar-item-chevron {
+  font-size: 0.65rem;
+  color: var(--sidebar-text);
+  transition: transform 0.2s ease;
+}
+.sidebar-item-chevron-open { transform: rotate(180deg); }
+
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 4px 18px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-subitem {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+}
+
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid rgba(255,255,255,0.07);

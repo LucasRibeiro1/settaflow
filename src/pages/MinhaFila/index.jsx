@@ -69,7 +69,7 @@ export default function MinhaFila() {
       <Header
         title="Minha Fila"
         subtitle={`Contatos agendados para hoje · ${hoje}`}
-        breadcrumb={<Breadcrumb items={[{ to: '/', label: 'Dashboard' }, { label: 'Minha Fila' }]} />}
+        breadcrumb={<Breadcrumb items={[{ to: '/dashboard', label: 'Dashboard' }, { label: 'Minha Fila' }]} />}
       />
       <div className="page-content fade-in">
 

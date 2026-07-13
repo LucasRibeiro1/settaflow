@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { MainLayout } from '../layouts/MainLayout'
 import { PrivateRoute } from '../components/auth/PrivateRoute'
 import Login from '../pages/Login'
+import Home from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
 import Carteira from '../pages/Carteira'
 import ClienteDetalhe from '../pages/Cliente'
@@ -26,7 +27,8 @@ export const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      { index: true, element: <Dashboard /> },
+      { index: true, element: <Home /> },
+      { path: 'dashboard', element: <Dashboard /> },
       { path: 'carteira', element: <Carteira /> },
       { path: 'carteira/:id', element: <ClienteDetalhe /> },
       { path: 'titulos', element: <ConsultaTitulos /> },
