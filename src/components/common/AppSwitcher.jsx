@@ -4,10 +4,22 @@ import './AppSwitcher.css'
 // Outras plataformas do Grupo Setta acessíveis a partir do SettaFlow
 const APPS = [
   {
+    name: 'Grupo Setta',
+    description: 'Site institucional do Grupo Setta',
+    url: 'https://gruposetta.com/',
+    icon: '🌐',
+  },
+  {
     name: 'Portal BI',
     description: 'Indicadores e relatórios gerenciais do Grupo Setta',
     url: 'https://portalbi.gruposetta.com.br/',
     icon: '📊',
+  },
+  {
+    name: 'Aprovador',
+    description: 'Sistema de aprovações do Grupo Setta',
+    url: 'https://app.aprovador.com/login',
+    icon: '✅',
   },
 ]
 
