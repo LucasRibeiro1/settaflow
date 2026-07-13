@@ -11,6 +11,12 @@ function initials(nome) {
   return nome.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
+// Match exato ou por segmento de path — evita que "/juridico-contratos"
+// seja considerado prefixo de "/juridico" (Títulos Jurídico) por engano
+function isActivePath(pathname, to) {
+  return pathname === to || pathname.startsWith(`${to}/`)
+}
+
 const MENU_GROUPS = [
   {
     key: 'financeiro',
@@ -50,7 +56,7 @@ export function Sidebar() {
   const visibleGroups = MENU_GROUPS.filter((g) => g.key !== 'juridico' || canAccessJuridico(user))
 
   const groupActiveMap = Object.fromEntries(
-    visibleGroups.map((g) => [g.key, g.items.some((item) => location.pathname.startsWith(item.to))])
+    visibleGroups.map((g) => [g.key, g.items.some((item) => isActivePath(location.pathname, item.to))])
   )
   const [openGroups, setOpenGroups] = useState(groupActiveMap)
 

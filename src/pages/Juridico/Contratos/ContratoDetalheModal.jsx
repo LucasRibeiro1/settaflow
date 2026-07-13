@@ -24,11 +24,18 @@ function Campo({ label, value }) {
 
 export function ContratoDetalheModal({ contrato, onClose, onChanged, usuarioAtual }) {
   const { addToast } = useToast()
+  const [tab, setTab] = useState('detalhes')
   const [novoStatus, setNovoStatus] = useState('')
   const [obsAnalise, setObsAnalise] = useState('')
+  const [novaTratativa, setNovaTratativa] = useState('')
   const [saving, setSaving] = useState(false)
 
   if (!contrato) return null
+
+  const handleClose = () => {
+    setTab('detalhes')
+    onClose()
+  }
 
   const handleAlterarStatus = async () => {
     if (!novoStatus) return
@@ -67,8 +74,26 @@ export function ContratoDetalheModal({ contrato, onClose, onChanged, usuarioAtua
     addToast('Aprovação disparada no Power Automate (integração a ser configurada).', 'info')
   }
 
+  const handleAdicionarTratativa = async () => {
+    if (!novaTratativa.trim()) {
+      addToast('Descreva a tratativa/observação antes de registrar.', 'warning')
+      return
+    }
+    setSaving(true)
+    try {
+      await contratoService.adicionarTratativa(contrato.id, novaTratativa, usuarioAtual)
+      addToast('Tratativa registrada.', 'success')
+      setNovaTratativa('')
+      onChanged()
+    } catch {
+      addToast('Erro ao registrar tratativa.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <Modal open={!!contrato} onClose={onClose} title={`Contrato ${contrato.numero}`} size="xl">
+    <Modal open={!!contrato} onClose={handleClose} title={`Contrato ${contrato.numero}`} size="xl">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -82,102 +107,158 @@ export function ContratoDetalheModal({ contrato, onClose, onChanged, usuarioAtua
           )}
         </div>
 
-        <div>
-          <h4 className="contrato-form-section">Dados do Contrato</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px' }}>
-            <Campo label="Empresa" value={EMPRESA_LABELS[contrato.empresa]} />
-            <Campo label="Tipo de Contrato" value={TIPO_CONTRATO_LABELS[contrato.tipoContrato]} />
-            <Campo label="Espécie" value={ESPECIE_LABELS[contrato.especie]} />
-            <Campo label="Modalidade" value={MODALIDADE_LABELS[contrato.modalidade]} />
-            {contrato.contratoOriginal && <Campo label="Contrato Original" value={contrato.contratoOriginal} />}
-            <Campo label="Minutagem" value={MINUTAGEM_LABELS[contrato.minutagem]} />
-            <Campo label="Seguro/Garantia" value={contrato.seguroGarantia === 'sim' ? (TIPO_SEGURO_LABELS[contrato.tipoSeguro] || 'Sim') : 'Não'} />
-            <Campo label="Assinará o Contrato" value={ASSINANTE_LABELS[contrato.assinante]} />
-            {contrato.ndaInfo?.length > 0 && (
-              <Campo label="Informações do NDA" value={contrato.ndaInfo.map((v) => NDA_INFO_LABELS[v]).join(', ')} />
-            )}
-          </div>
+        <div className="tabs-bar">
+          <button className={`tab-btn ${tab === 'detalhes' ? 'tab-active' : ''}`} onClick={() => setTab('detalhes')}>
+            Detalhes e Portal
+          </button>
+          <button className={`tab-btn ${tab === 'tratativas' ? 'tab-active' : ''}`} onClick={() => setTab('tratativas')}>
+            Tratativas e Observações
+            {contrato.tratativas?.length ? (
+              <span style={{ marginLeft: 6, background: 'var(--primary)', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: '0.7rem', fontWeight: 700 }}>
+                {contrato.tratativas.length}
+              </span>
+            ) : null}
+          </button>
         </div>
 
-        <div>
-          <h4 className="contrato-form-section">Cliente/Fornecedor</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px' }}>
-            <Campo label="Nome" value={contrato.clienteNome} />
-            <Campo label="CNPJ" value={formatCNPJ(contrato.clienteCnpj)} />
-            <Campo label="E-mail" value={contrato.clienteEmail} />
-          </div>
-        </div>
-
-        <div>
-          <h4 className="contrato-form-section">Solicitação</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px' }}>
-            <Campo label="Data de Solicitação" value={formatDate(contrato.dataSolicitacao)} />
-            <Campo label="Solicitante" value={contrato.solicitante} />
-            <Campo label="Data de Assinatura" value={contrato.dataAssinatura ? formatDate(contrato.dataAssinatura) : '—'} />
-            <Campo label="Vencimento" value={contrato.dataVencimento ? formatDate(contrato.dataVencimento) : '—'} />
-          </div>
-          {contrato.observacoes && (
-            <p style={{ marginTop: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              <strong>Observações:</strong> {contrato.observacoes}
-            </p>
-          )}
-          {contrato.analiseTecnica && (
-            <div style={{ marginTop: 10, padding: '10px 14px', background: 'var(--info-bg)', border: '1px solid var(--info-border)', borderRadius: 8 }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0e7490', textTransform: 'uppercase' }}>Análise Técnica</span>
-              <p style={{ fontSize: '0.825rem', marginTop: 4 }}>{contrato.analiseTecnica}</p>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h4 className="contrato-form-section">Portal Contratos</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <Select label="Alterar Status" value={novoStatus} onChange={(e) => setNovoStatus(e.target.value)} style={{ minWidth: 220 }}>
-                <option value="">Selecione o novo status...</option>
-                {CONTRATO_STATUS_OPTIONS.filter((o) => o.value !== contrato.status).map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </Select>
-              <Button variant="primary" size="sm" onClick={handleAlterarStatus} loading={saving} disabled={!novoStatus}>
-                Aplicar Status
-              </Button>
+        {tab === 'detalhes' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div>
+              <h4 className="contrato-form-section">Dados do Contrato</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px' }}>
+                <Campo label="Empresa" value={EMPRESA_LABELS[contrato.empresa]} />
+                <Campo label="Tipo de Contrato" value={TIPO_CONTRATO_LABELS[contrato.tipoContrato]} />
+                <Campo label="Espécie" value={ESPECIE_LABELS[contrato.especie]} />
+                <Campo label="Modalidade" value={MODALIDADE_LABELS[contrato.modalidade]} />
+                {contrato.contratoOriginal && <Campo label="Contrato Original" value={contrato.contratoOriginal} />}
+                <Campo label="Minutagem" value={MINUTAGEM_LABELS[contrato.minutagem]} />
+                <Campo label="Seguro/Garantia" value={contrato.seguroGarantia === 'sim' ? (TIPO_SEGURO_LABELS[contrato.tipoSeguro] || 'Sim') : 'Não'} />
+                <Campo label="Assinará o Contrato" value={ASSINANTE_LABELS[contrato.assinante]} />
+                {contrato.ndaInfo?.length > 0 && (
+                  <Campo label="Informações do NDA" value={contrato.ndaInfo.map((v) => NDA_INFO_LABELS[v]).join(', ')} />
+                )}
+              </div>
             </div>
 
             <div>
+              <h4 className="contrato-form-section">Cliente/Fornecedor</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px' }}>
+                <Campo label="Nome" value={contrato.clienteNome} />
+                <Campo label="CNPJ" value={formatCNPJ(contrato.clienteCnpj)} />
+                <Campo label="E-mail" value={contrato.clienteEmail} />
+              </div>
+            </div>
+
+            <div>
+              <h4 className="contrato-form-section">Solicitação</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px 20px' }}>
+                <Campo label="Data de Solicitação" value={formatDate(contrato.dataSolicitacao)} />
+                <Campo label="Solicitante" value={contrato.solicitante} />
+                <Campo label="Data de Assinatura" value={contrato.dataAssinatura ? formatDate(contrato.dataAssinatura) : '—'} />
+                <Campo label="Vencimento" value={contrato.dataVencimento ? formatDate(contrato.dataVencimento) : '—'} />
+              </div>
+              {contrato.observacoes && (
+                <p style={{ marginTop: 10, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <strong>Observações:</strong> {contrato.observacoes}
+                </p>
+              )}
+              {contrato.analiseTecnica && (
+                <div style={{ marginTop: 10, padding: '10px 14px', background: 'var(--info-bg)', border: '1px solid var(--info-border)', borderRadius: 8 }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0e7490', textTransform: 'uppercase' }}>Análise Técnica</span>
+                  <p style={{ fontSize: '0.825rem', marginTop: 4 }}>{contrato.analiseTecnica}</p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="contrato-form-section">Portal Contratos</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                  <Select label="Alterar Status" value={novoStatus} onChange={(e) => setNovoStatus(e.target.value)} style={{ minWidth: 220 }}>
+                    <option value="">Selecione o novo status...</option>
+                    {CONTRATO_STATUS_OPTIONS.filter((o) => o.value !== contrato.status).map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </Select>
+                  <Button variant="primary" size="sm" onClick={handleAlterarStatus} loading={saving} disabled={!novoStatus}>
+                    Aplicar Status
+                  </Button>
+                </div>
+
+                <div>
+                  <Textarea
+                    label="Análise Técnica para o Solicitante"
+                    value={obsAnalise}
+                    onChange={(e) => setObsAnalise(e.target.value)}
+                    placeholder="Descreva as informações adicionais/ajustes necessários..."
+                    rows={3}
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    <Button variant="secondary" size="sm" onClick={handleEnviarAnalise} loading={saving}>
+                      📤 Enviar Análise Técnica ao Solicitante
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <Button variant="ghost" size="sm" onClick={handleAprovacaoPowerAutomate}>
+                    🔄 Disparar Aprovação (Power Automate)
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {contrato.historico?.length > 0 && (
+              <div>
+                <h4 className="contrato-form-section">Histórico</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[...contrato.historico].reverse().map((h, i) => (
+                    <div key={i} style={{ fontSize: '0.775rem', color: 'var(--text-secondary)', display: 'flex', gap: 8 }}>
+                      <span style={{ color: 'var(--text-muted)', minWidth: 78 }}>{formatDate(h.data)}</span>
+                      <span>{h.evento}{h.usuario ? ` — ${h.usuario}` : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'tratativas' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
               <Textarea
-                label="Análise Técnica para o Solicitante"
-                value={obsAnalise}
-                onChange={(e) => setObsAnalise(e.target.value)}
-                placeholder="Descreva as informações adicionais/ajustes necessários..."
+                label="Nova Tratativa/Observação"
+                value={novaTratativa}
+                onChange={(e) => setNovaTratativa(e.target.value)}
+                placeholder="Registre um contato, decisão ou observação sobre este contrato..."
                 rows={3}
               />
               <div style={{ marginTop: 8 }}>
-                <Button variant="secondary" size="sm" onClick={handleEnviarAnalise} loading={saving}>
-                  📤 Enviar Análise Técnica ao Solicitante
+                <Button variant="primary" size="sm" onClick={handleAdicionarTratativa} loading={saving}>
+                  + Registrar Tratativa
                 </Button>
               </div>
             </div>
 
             <div>
-              <Button variant="ghost" size="sm" onClick={handleAprovacaoPowerAutomate}>
-                🔄 Disparar Aprovação (Power Automate)
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {contrato.historico?.length > 0 && (
-          <div>
-            <h4 className="contrato-form-section">Histórico</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[...contrato.historico].reverse().map((h, i) => (
-                <div key={i} style={{ fontSize: '0.775rem', color: 'var(--text-secondary)', display: 'flex', gap: 8 }}>
-                  <span style={{ color: 'var(--text-muted)', minWidth: 78 }}>{formatDate(h.data)}</span>
-                  <span>{h.evento}{h.usuario ? ` — ${h.usuario}` : ''}</span>
+              <h4 className="contrato-form-section">Histórico de Tratativas e Observações</h4>
+              {!contrato.tratativas?.length ? (
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>Nenhuma tratativa registrada ainda.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[...contrato.tratativas].reverse().map((t, i) => (
+                    <div key={i} style={{ padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <strong style={{ fontSize: '0.775rem', color: 'var(--text-primary)' }}>{t.usuario}</strong>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(t.data)}</span>
+                      </div>
+                      <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>{t.observacao}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}

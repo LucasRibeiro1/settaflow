@@ -97,6 +97,9 @@ function buildContrato(i) {
     historico: [
       { data: dataSolicitacao, evento: 'Solicitação criada', usuario: SOLICITANTES[i % SOLICITANTES.length] },
     ],
+    tratativas: i % 3 === 0
+      ? [{ data: addDays(dataSolicitacao, 2), usuario: ANALISTAS[i % ANALISTAS.length], observacao: 'Contato realizado com o cliente para alinhar cláusulas contratuais.' }]
+      : [],
   }
 }
 

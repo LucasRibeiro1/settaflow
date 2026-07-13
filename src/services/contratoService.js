@@ -57,6 +57,7 @@ export const contratoService = {
       dataVencimento: null,
       analiseTecnica: '',
       historico: [{ data: hojeISO(), evento: 'Solicitação criada', usuario: solicitante || 'Usuário' }],
+      tratativas: [],
       ...payload,
     }
     mockData = [novo, ...mockData]
@@ -84,6 +85,17 @@ export const contratoService = {
       if (c.id !== id) return c
       const atualizado = { ...c, analiseTecnica: observacao }
       return addEvento(atualizado, 'Análise técnica enviada ao solicitante', usuario)
+    })
+    return mockData.find((c) => c.id === id)
+  },
+
+  // Registra uma tratativa/observação no histórico do contrato
+  async adicionarTratativa(id, observacao, usuario) {
+    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
+    mockData = mockData.map((c) => {
+      if (c.id !== id) return c
+      const nova = { data: hojeISO(), usuario: usuario || 'Sistema', observacao }
+      return { ...c, tratativas: [...(c.tratativas || []), nova] }
     })
     return mockData.find((c) => c.id === id)
   },
