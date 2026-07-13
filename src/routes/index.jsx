@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { MainLayout } from '../layouts/MainLayout'
 import { PrivateRoute } from '../components/auth/PrivateRoute'
+import { RequireJuridico } from '../components/auth/RequireJuridico'
 import Login from '../pages/Login'
 import Home from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
@@ -39,9 +40,9 @@ export const router = createBrowserRouter([
       { path: 'tratativas', element: <Tratativas /> },
       { path: 'acordos', element: <Acordos /> },
       { path: 'minha-fila', element: <MinhaFila /> },
-      { path: 'juridico-dashboard', element: <JuridicoDashboard /> },
-      { path: 'juridico-fila', element: <JuridicoMinhaFila /> },
-      { path: 'juridico-contratos', element: <JuridicoContratos /> },
+      { path: 'juridico-dashboard', element: <RequireJuridico><JuridicoDashboard /></RequireJuridico> },
+      { path: 'juridico-fila', element: <RequireJuridico><JuridicoMinhaFila /></RequireJuridico> },
+      { path: 'juridico-contratos', element: <RequireJuridico><JuridicoContratos /></RequireJuridico> },
       { path: 'relatorios', element: <Relatorios /> },
       { path: 'configuracoes', element: <Configuracoes /> },
     ],

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { AppSwitcher } from '../components/common/AppSwitcher'
+import { canAccessJuridico } from '../utils/permissions'
 import './Sidebar.css'
 
 function initials(nome) {
@@ -46,8 +47,10 @@ export function Sidebar() {
   const nomeUsuario = user?.nome || user?.username || ''
   const perfilUsuario = user?.perfil || ''
 
+  const visibleGroups = MENU_GROUPS.filter((g) => g.key !== 'juridico' || canAccessJuridico(user))
+
   const groupActiveMap = Object.fromEntries(
-    MENU_GROUPS.map((g) => [g.key, g.items.some((item) => location.pathname.startsWith(item.to))])
+    visibleGroups.map((g) => [g.key, g.items.some((item) => location.pathname.startsWith(item.to))])
   )
   const [openGroups, setOpenGroups] = useState(groupActiveMap)
 
@@ -55,7 +58,7 @@ export function Sidebar() {
     setOpenGroups((prev) => {
       let changed = false
       const next = { ...prev }
-      for (const g of MENU_GROUPS) {
+      for (const g of visibleGroups) {
         if (groupActiveMap[g.key] && !prev[g.key]) {
           next[g.key] = true
           changed = true
@@ -99,7 +102,7 @@ export function Sidebar() {
           {!sidebarCollapsed && <span className="sidebar-item-label">Home</span>}
         </NavLink>
 
-        {MENU_GROUPS.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.key}>
             <button
               type="button"
