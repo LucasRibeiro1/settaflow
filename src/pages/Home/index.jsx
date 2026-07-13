@@ -8,11 +8,8 @@ export default function Home() {
   return (
     <>
       <Header title="Home" subtitle="Página inicial" />
-      <div
-        className="page-content fade-in"
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}
-      >
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+      <div className="page-content fade-in" style={{ display: 'flex', justifyContent: 'center' }}>
+        <h1 style={{ marginTop: 32, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>
           Seja bem-vindo{nome ? `, ${nome}` : ''}!
         </h1>
       </div>

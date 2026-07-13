@@ -105,10 +105,17 @@
 .sidebar-item-label { flex: 1; }
 
 .sidebar-item-toggle {
+  display: flex;
+  align-items: center;
   width: 100%;
   background: none;
   border: none;
+  appearance: none;
+  -webkit-appearance: none;
   font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
   cursor: pointer;
 }
 .sidebar-item-chevron {
