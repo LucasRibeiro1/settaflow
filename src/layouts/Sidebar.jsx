@@ -26,7 +26,16 @@ const MENU_GROUPS = [
       { to: '/relatorios', label: 'Relatórios', icon: '📊' },
     ],
   },
-  { key: 'juridico', label: 'Jurídico', icon: '🏛️', items: [] },
+  {
+    key: 'juridico',
+    label: 'Jurídico',
+    icon: '🏛️',
+    items: [
+      { to: '/juridico-dashboard', label: 'Dashboard', icon: '▣' },
+      { to: '/juridico-fila', label: 'Minha Fila', icon: '⚡' },
+      { to: '/juridico-contratos', label: 'Contratos', icon: '📄' },
+    ],
+  },
   { key: 'comercial', label: 'Comercial', icon: '🧭', items: [] },
 ]
 

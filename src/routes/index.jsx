@@ -13,6 +13,9 @@ import Relatorios from '../pages/Relatorios'
 import Configuracoes from '../pages/Configuracoes'
 import ConsultaTitulos from '../pages/Titulos'
 import TitulosJuridico from '../pages/TitulosJuridico'
+import JuridicoDashboard from '../pages/Juridico/Dashboard'
+import JuridicoMinhaFila from '../pages/Juridico/MinhaFila'
+import JuridicoContratos from '../pages/Juridico/Contratos'
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +39,9 @@ export const router = createBrowserRouter([
       { path: 'tratativas', element: <Tratativas /> },
       { path: 'acordos', element: <Acordos /> },
       { path: 'minha-fila', element: <MinhaFila /> },
+      { path: 'juridico-dashboard', element: <JuridicoDashboard /> },
+      { path: 'juridico-fila', element: <JuridicoMinhaFila /> },
+      { path: 'juridico-contratos', element: <JuridicoContratos /> },
       { path: 'relatorios', element: <Relatorios /> },
       { path: 'configuracoes', element: <Configuracoes /> },
     ],
