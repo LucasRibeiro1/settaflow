@@ -104,6 +104,7 @@ export const tituloService = {
       ...t,
       clienteNome: clienteMap[t.clienteId]?.razaoSocial || t.clienteCodigo,
       grupoCliente: clienteMap[t.clienteId]?.grupoCliente || '—',
+      carteira: clienteMap[t.clienteId]?.carteira || '—',
     }))
 
     result.sort((a, b) => b.diasAtraso - a.diasAtraso)

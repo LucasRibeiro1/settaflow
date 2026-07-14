@@ -49,7 +49,7 @@ export default function Carteira() {
   const { addToast } = useToast()
   const [search, setSearch] = useState('')
   const [codigoCliente, setCodigoCliente] = useState('')
-  const [filters, setFilters] = useState({ status: '', responsavel: '', regiao: '', grupo: '' })
+  const [filters, setFilters] = useState({ status: '', responsavel: '', regiao: '', grupo: '', carteira: '' })
   const [sortField, setSortField] = useState('maiorAtraso')
   const [sortDir, setSortDir] = useState('desc')
   const [obsModal, setObsModal] = useState({ open: false, cliente: null, text: '' })
@@ -75,6 +75,15 @@ export default function Carteira() {
     ]
   }, [clientes])
 
+  // Carteiras extraídas dinamicamente da API
+  const carteiraOptions = useMemo(() => {
+    const unique = [...new Set(clientes.map((c) => c.carteira).filter((c) => c && c !== '—'))].sort()
+    return [
+      { value: '', label: 'Todas as carteiras' },
+      ...unique.map((c) => ({ value: c, label: c })),
+    ]
+  }, [clientes])
+
   const filtered = useMemo(() => {
     let result = clientes
     if (debouncedSearch) {
@@ -90,6 +99,7 @@ export default function Carteira() {
       result = result.filter((c) => c.codigo.toLowerCase().includes(q))
     }
     if (filters.grupo) result = result.filter((c) => c.grupoCliente === filters.grupo)
+    if (filters.carteira) result = result.filter((c) => c.carteira === filters.carteira)
     if (filters.status) result = result.filter((c) => c.statusCobranca === filters.status)
     if (filters.responsavel) result = result.filter((c) => c.responsavelCobranca === filters.responsavel)
     if (filters.regiao) result = result.filter((c) => c.regiao === filters.regiao)
@@ -127,12 +137,12 @@ export default function Carteira() {
     goToPage(1)
   }
 
-  const hasActiveFilters = search || codigoCliente || filters.status || filters.responsavel || filters.regiao || filters.grupo
+  const hasActiveFilters = search || codigoCliente || filters.status || filters.responsavel || filters.regiao || filters.grupo || filters.carteira
 
   const clearFilters = () => {
     setSearch('')
     setCodigoCliente('')
-    setFilters({ status: '', responsavel: '', regiao: '', grupo: '' })
+    setFilters({ status: '', responsavel: '', regiao: '', grupo: '', carteira: '' })
   }
 
   const obsAtual = (c) => obsOverrides[c.id] ?? c.observacoes ?? ''
@@ -195,6 +205,9 @@ export default function Carteira() {
             <Select value={filters.grupo} onChange={(e) => setFilter('grupo', e.target.value)}>
               {grupoOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
+            <Select value={filters.carteira} onChange={(e) => setFilter('carteira', e.target.value)}>
+              {carteiraOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </Select>
             <Select value={filters.status} onChange={(e) => setFilter('status', e.target.value)}>
               {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
@@ -213,7 +226,7 @@ export default function Carteira() {
         {/* Table */}
         <Card padding={false}>
           {loading ? (
-            <SkeletonTable rows={8} cols={13} />
+            <SkeletonTable rows={8} cols={14} />
           ) : filtered.length === 0 ? (
             <div className="empty-state">
               <span className="empty-icon">🔍</span>
@@ -231,6 +244,7 @@ export default function Carteira() {
                       <th onClick={() => handleSort('razaoSocial')}>Razão Social {sortIcon('razaoSocial')}</th>
                       <th>Fantasia</th>
                       <th onClick={() => handleSort('grupoCliente')}>Grupo de Venda {sortIcon('grupoCliente')}</th>
+                      <th onClick={() => handleSort('carteira')}>Carteira {sortIcon('carteira')}</th>
                       <th onClick={() => handleSort('cidade')}>Cidade/UF {sortIcon('cidade')}</th>
                       <th>Responsável</th>
                       <th onClick={() => handleSort('valorTotalAberto')}>Valor Aberto {sortIcon('valorTotalAberto')}</th>
@@ -255,6 +269,7 @@ export default function Carteira() {
                         <td className="td-nome">{c.razaoSocial}</td>
                         <td className="text-secondary">{c.nomeFantasia}</td>
                         <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{c.grupoCliente}</td>
+                        <td className="text-secondary">{c.carteira}</td>
                         <td>{c.cidade}/{c.uf}</td>
                         <td>{c.responsavelCobranca}</td>
                         <td className="td-valor">{formatCurrency(c.valorTotalAberto)}</td>

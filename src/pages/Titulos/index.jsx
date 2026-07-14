@@ -161,6 +161,7 @@ export default function ConsultaTitulos() {
   const [filterFaixas, setFilterFaixas] = useState([])
   const [filterAtrasos, setFilterAtrasos] = useState([])
   const [filterGrupo, setFilterGrupo] = useState('')
+  const [filterCarteira, setFilterCarteira] = useState('')
   const [filterInadimplencias, setFilterInadimplencias] = useState([])
   const [filterMotivos, setFilterMotivos] = useState([])
   const [sortField, setSortField] = useState('diasAtraso')
@@ -177,6 +178,15 @@ export default function ConsultaTitulos() {
     return [
       { value: '', label: 'Todos os grupos' },
       ...unique.map((g) => ({ value: g, label: g })),
+    ]
+  }, [allTitulos])
+
+  // Carteiras extraídas dinamicamente dos títulos carregados
+  const carteiraOptions = useMemo(() => {
+    const unique = [...new Set(allTitulos.map((t) => t.carteira).filter((c) => c && c !== '—'))].sort()
+    return [
+      { value: '', label: 'Todas as carteiras' },
+      ...unique.map((c) => ({ value: c, label: c })),
     ]
   }, [allTitulos])
 
@@ -198,6 +208,7 @@ export default function ConsultaTitulos() {
       )
     }
     if (filterGrupo) result = result.filter((t) => t.grupoCliente === filterGrupo)
+    if (filterCarteira) result = result.filter((t) => t.carteira === filterCarteira)
     if (filterTipos.length > 0) result = result.filter((t) => filterTipos.includes(t.tipo))
     if (filterAtrasos.length > 0) {
       result = result.filter((t) =>
@@ -235,7 +246,7 @@ export default function ConsultaTitulos() {
       return 0
     })
     return result
-  }, [allTitulos, debouncedSearch, filterGrupo, filterTipos, filterFaixas, filterAtrasos, filterInadimplencias, filterMotivos, sortField, sortDir])
+  }, [allTitulos, debouncedSearch, filterGrupo, filterCarteira, filterTipos, filterFaixas, filterAtrasos, filterInadimplencias, filterMotivos, sortField, sortDir])
 
   const { page, totalPages, paginatedData, goToPage } = usePagination(filtered, PAGE_SIZE)
 
@@ -253,8 +264,8 @@ export default function ConsultaTitulos() {
     </span>
   )
 
-  const hasFilters = search || filterGrupo || filterTipos.length > 0 || filterFaixas.length > 0 || filterAtrasos.length > 0 || filterInadimplencias.length > 0 || filterMotivos.length > 0
-  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterTipos([]); setFilterFaixas([]); setFilterAtrasos([]); setFilterInadimplencias([]); setFilterMotivos([]) }
+  const hasFilters = search || filterGrupo || filterCarteira || filterTipos.length > 0 || filterFaixas.length > 0 || filterAtrasos.length > 0 || filterInadimplencias.length > 0 || filterMotivos.length > 0
+  const clearFilters = () => { setSearch(''); setFilterGrupo(''); setFilterCarteira(''); setFilterTipos([]); setFilterFaixas([]); setFilterAtrasos([]); setFilterInadimplencias([]); setFilterMotivos([]) }
 
   function handleExportCSV() {
     const headers = [
@@ -351,6 +362,9 @@ export default function ConsultaTitulos() {
             <Select value={filterGrupo} onChange={(e) => { setFilterGrupo(e.target.value); goToPage(1) }}>
               {grupoOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
+            <Select value={filterCarteira} onChange={(e) => { setFilterCarteira(e.target.value); goToPage(1) }}>
+              {carteiraOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </Select>
             <MultiSelectDropdown
               options={tipoOptions}
               selected={filterTipos}
@@ -405,6 +419,7 @@ export default function ConsultaTitulos() {
                       <th onClick={() => handleSort('clienteCodigo')}>Código {sortIcon('clienteCodigo')}</th>
                       <th onClick={() => handleSort('clienteNome')}>Cliente {sortIcon('clienteNome')}</th>
                       <th onClick={() => handleSort('grupoCliente')}>Grupo {sortIcon('grupoCliente')}</th>
+                      <th onClick={() => handleSort('carteira')}>Carteira {sortIcon('carteira')}</th>
                       <th>Prefixo</th>
                       <th onClick={() => handleSort('titulo')}>Título {sortIcon('titulo')}</th>
                       <th>Parcela</th>
@@ -434,6 +449,7 @@ export default function ConsultaTitulos() {
                           </span>
                         </td>
                         <td style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{t.grupoCliente}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{t.carteira}</td>
                         <td>{t.prefixo}</td>
                         <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.titulo}</td>
                         <td>{t.parcela}</td>
@@ -476,7 +492,7 @@ export default function ConsultaTitulos() {
                   </tbody>
                   <tfoot>
                     <tr style={{ background: 'var(--bg)' }}>
-                      <td colSpan={11} style={{ padding: '12px 16px', fontWeight: 700, fontSize: '0.8rem' }}>
+                      <td colSpan={12} style={{ padding: '12px 16px', fontWeight: 700, fontSize: '0.8rem' }}>
                         Total (página {page}/{totalPages} · {filtered.length} títulos)
                       </td>
                       <td style={{ padding: '12px 16px', fontWeight: 700 }}>

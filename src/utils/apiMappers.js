@@ -77,6 +77,7 @@ export function mapCliente(raw) {
     uf,
     regiao: UF_REGIAO[uf] || 'Outros',
     grupoCliente: String(raw.GRUPOVENDA ?? raw.grupovenda ?? '').trim() || '—',
+    carteira: String(raw.CARTEIRA ?? raw.carteira ?? '').trim() || '—',
     emails,
     telefones,
     contato: String(raw.CONTATO ?? raw.contato ?? '').trim(),
