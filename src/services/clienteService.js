@@ -126,7 +126,7 @@ export const clienteService = {
   },
 
   async alterarObservacao(codigo, loja, observacao) {
-    const { data } = await protheusApi.post('/rest/STWS019A1/alterarobs', {
+    const { data } = await protheusApi.post('/rest/STWSF01/alterarobs', {
       cCODCLI: String(codigo).trim(),
       cLoja:   String(loja).trim(),
       cObserv: String(observacao || ''),
@@ -135,7 +135,7 @@ export const clienteService = {
   },
 
   async alterarContatoFinanceiro(codigo, loja, { telefone, email }) {
-    const { data } = await protheusApi.post('/rest/STWS024A/alterar', {
+    const { data } = await protheusApi.post('/rest/STWSF07/alterar', {
       cCliente:   String(codigo).trim(),
       cLoja:      String(loja).trim(),
       cTELCONT:   String(telefone || ''),

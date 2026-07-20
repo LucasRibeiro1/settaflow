@@ -3,7 +3,7 @@ import protheusApi from './protheusApi'
 export const authService = {
   async login(username, password) {
     const { data } = await protheusApi.post(
-      '/rest/STWS023P/validar',
+      '/rest/STWSF06/validar',
       { cUser: username, cSenha: password },
       { auth: { username, password } }
     )
@@ -18,7 +18,7 @@ export const authService = {
   },
 
   async getUsuarios() {
-    const { data } = await protheusApi.get('/rest/STWS023G/listar/')
+    const { data } = await protheusApi.get('/rest/STWSF06/listar/')
     return Array.isArray(data) ? data : (data.usuarios || data.dados || data.resultado || [])
   },
 }

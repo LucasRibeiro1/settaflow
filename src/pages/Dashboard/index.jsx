@@ -129,7 +129,7 @@ export default function Dashboard() {
     [data?.rawClientes, data?.rawTitulos, filtroInadimplencia],
   )
 
-  // Histórico do gráfico: meses e valores vêm da STWS025 (inclui títulos já baixados/pagos)
+  // Histórico do gráfico: meses e valores vêm da STWSF08 (inclui títulos já baixados/pagos)
   const evolucaoMensalComReal = historicoVencidosReal || []
 
   if (loading || !data) {

@@ -3,8 +3,8 @@ import { mockAcordos } from '../mocks/acordos'
 
 const USE_MOCK = false
 
-const POST_URL = '/rest/STWS022P'           // gravação  (porta 8091)
-const GET_URL  = '/rest/STWS022G/listar'    // consulta  (porta 8091)
+const POST_URL = '/rest/STWSF05/gravar'     // gravação  (porta 8091)
+const GET_URL  = '/rest/STWSF05/listar'     // consulta  (porta 8091)
 
 let mockData = [...mockAcordos]
 let nextId = mockData.length + 1
@@ -36,7 +36,7 @@ function uuid() {
     })
 }
 
-// Monta o payload no formato esperado pela API STWS022P
+// Monta o payload no formato esperado pela API STWSF05/gravar
 function toProtheusPayload(payload) {
   const clienteIdStr = String(payload.clienteId || '')
   const dashIdx = clienteIdStr.lastIndexOf('-')
@@ -60,7 +60,7 @@ function toProtheusPayload(payload) {
   }
 }
 
-// Mapeia retorno da API STWS022G → formato interno do app
+// Mapeia retorno da API STWSF05/listar → formato interno do app
 function fromProtheusRecord(raw) {
   return {
     id: raw.cNUM,

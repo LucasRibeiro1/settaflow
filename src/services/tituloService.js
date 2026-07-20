@@ -111,11 +111,11 @@ export const tituloService = {
     return { data: result, total: result.length }
   },
 
-  // Mapeamento label → código numérico esperado pela API STWS019A
+  // Mapeamento label → código numérico esperado pela API STWSF01
   INADIM_CODE: { normal: '1', externa: '2', juridico: '3' },
   MOTIVO_CODE: { setta: '1', cliente: '2' },
 
-  // Envia alteração de inadimplência/motivo para a API STWS019A
+  // Envia alteração de inadimplência/motivo para a API STWSF01
   async alterarClassificacao(titulo, { inadimplencia, motivo }) {
     const body = {
       cTitulo:  String(titulo.titulo  || '').trim(),
@@ -126,7 +126,7 @@ export const tituloService = {
       cInadim:  this.INADIM_CODE[inadimplencia] ?? '',
       cMotivo:  this.MOTIVO_CODE[motivo]        ?? '',
     }
-    const { data } = await protheusApi.post('/rest/STWS019A/alterar', body)
+    const { data } = await protheusApi.post('/rest/STWSF01/alterar', body)
     return data
   },
 

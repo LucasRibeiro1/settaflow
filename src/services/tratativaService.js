@@ -4,8 +4,8 @@ import { mockTratativas } from '../mocks/tratativas'
 
 const USE_MOCK = false
 
-const POST_URL = '/rest/STWS021P'         // gravação
-const GET_URL  = '/rest/STWS021G/listar'  // consulta
+const POST_URL = '/rest/STWSF03/gravar'   // gravação
+const GET_URL  = '/rest/STWSF03/listar'   // consulta
 
 let mockData = [...mockTratativas]
 let nextId = mockData.length + 1
@@ -41,7 +41,7 @@ function parseProtheusTime(raw) {
   return null
 }
 
-// Monta o payload no formato esperado pela API STWS021P
+// Monta o payload no formato esperado pela API STWSF03/gravar
 function toProtheusPayload(payload) {
   const clienteIdStr = String(payload.clienteId || '')
   const dashIdx = clienteIdStr.lastIndexOf('-')
@@ -66,7 +66,7 @@ function toProtheusPayload(payload) {
   }
 }
 
-// Mapeia retorno da API STWS021G → formato interno do app
+// Mapeia retorno da API STWSF03/listar → formato interno do app
 function fromProtheusRecord(raw) {
   const dataIso   = parseProtheusDate(raw.DATA)
   const horaIso   = parseProtheusTime(raw.HORA)
