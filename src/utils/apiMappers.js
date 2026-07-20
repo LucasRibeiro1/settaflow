@@ -7,6 +7,8 @@ const UF_REGIAO = {
   PR: 'Sul', RS: 'Sul', SC: 'Sul',
 }
 
+const CARTEIRA_LABELS = { 1: 'Carteira Fria', 2: 'Carteira Quente' }
+
 // Aceita YYYYMMDD, YYYY-MM-DD ou DD/MM/YYYY
 export function parseProtheusDate(dateStr) {
   if (!dateStr || typeof dateStr !== 'string') return null
@@ -77,7 +79,7 @@ export function mapCliente(raw) {
     uf,
     regiao: UF_REGIAO[uf] || 'Outros',
     grupoCliente: String(raw.GRUPOVENDA ?? raw.grupovenda ?? '').trim() || '—',
-    carteira: String(raw.CARTEIRA ?? raw.carteira ?? '').trim() || '—',
+    carteira: CARTEIRA_LABELS[parseInt(raw.CARTEIRA ?? raw.carteira, 10)] || '—',
     emails,
     telefones,
     contato: String(raw.CONTATO ?? raw.contato ?? '').trim(),
