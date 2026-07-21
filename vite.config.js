@@ -13,7 +13,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/acordos/, '/rest'),
       },
       '/rest': {
-        target: 'http://177.85.6.66:8091',
+        target: 'https://api.gruposetta.com.br',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/rest/, '/rest01'),
