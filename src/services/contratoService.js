@@ -4,10 +4,8 @@ import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload, toProtheusD
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 import { mockContratos } from '../mocks/contratos'
 
-// Temporariamente em modo mock (demonstração/reunião) — a API real (STWSF09,
-// STWSF10, STWSF11, STWSF12P) está apresentando 500/timeout em produção.
-// Desligar assim que o backend estiver estável de novo.
-const USE_MOCK = true
+// Modo mock usado só pra demonstração/reunião — dados reais reativados.
+const USE_MOCK = false
 
 const LISTAR_URL = '/rest/STWSF09/listar/'
 const GRAVAR_URL = '/rest/STWSF09P/gravar'
