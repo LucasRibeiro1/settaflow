@@ -3,8 +3,9 @@ import { mockAcordos } from '../mocks/acordos'
 
 const USE_MOCK = false
 
-const POST_URL = '/rest/STWSF05/gravar'     // gravação  (porta 8091)
-const GET_URL  = '/rest/STWSF05/listar'     // consulta  (porta 8091)
+const POST_URL    = '/rest/STWSF05P/gravar'  // gravação  (porta 8091)
+const GET_URL     = '/rest/STWSF05/listar'   // consulta  (porta 8091)
+const ALTERAR_URL = '/rest/STWSF04A/alterar' // alterar status
 
 let mockData = [...mockAcordos]
 let nextId = mockData.length + 1
@@ -36,7 +37,7 @@ function uuid() {
     })
 }
 
-// Monta o payload no formato esperado pela API STWSF05/gravar
+// Monta o payload no formato esperado pela API STWSF05P/gravar
 function toProtheusPayload(payload) {
   const clienteIdStr = String(payload.clienteId || '')
   const dashIdx = clienteIdStr.lastIndexOf('-')
@@ -127,7 +128,7 @@ export const acordoService = {
       return mockData.find((a) => String(a.id) === String(id))
     }
     const body = { cNUM: id, cSTATUS: payload.status }
-    const { data } = await protheusApi.put(POST_URL, body)
+    const { data } = await protheusApi.post(ALTERAR_URL, body)
     return data
   },
 }

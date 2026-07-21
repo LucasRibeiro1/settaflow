@@ -135,7 +135,7 @@ export const clienteService = {
   },
 
   async alterarContatoFinanceiro(codigo, loja, { telefone, email }) {
-    const { data } = await protheusApi.post('/rest/STWSF07/alterar', {
+    const { data } = await protheusApi.post('/rest/STWSF07A/alterar', {
       cCliente:   String(codigo).trim(),
       cLoja:      String(loja).trim(),
       cTELCONT:   String(telefone || ''),
