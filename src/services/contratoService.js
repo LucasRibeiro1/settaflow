@@ -1,6 +1,6 @@
 import protheusApi from './protheusApi'
 import { extractArray } from '../utils/apiMappers'
-import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload, toProtheusDate } from '../utils/contratoMappers'
+import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload, toProtheusDate, STATUS_REVERSE } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 
 const LISTAR_URL = '/rest/STWSF09/listar/'
@@ -8,11 +8,12 @@ const GRAVAR_URL = '/rest/STWSF09P/gravar'
 const HISTORICO_URL = '/rest/STWSF10/listar/'
 const TRATATIVA_GRAVAR_URL = '/rest/STWSF10P/gravar'
 const TRATATIVAS_URL = '/rest/STWSF11/listar/'
+const ALTERAR_STATUS_URL = '/rest/STWSF12P/alterar'
 
-// Cache em memória: listagem, criação, histórico e tratativas já são reais
-// (STWSF09, STWSF09P, STWSF10, STWSF11); as demais ações de escrita abaixo
-// (alterar status, análise técnica) ainda não têm rotina no Protheus, então
-// mutam esse cache localmente até os próximos endpoints chegarem.
+// Cache em memória: listagem, criação, histórico, tratativas e alterar status
+// já são reais (STWSF09, STWSF09P, STWSF10, STWSF10P, STWSF11, STWSF12P); só
+// a análise técnica ainda não tem rotina no Protheus, e muta o cache
+// localmente até o endpoint chegar.
 let cache = null
 let fetchPromise = null
 
@@ -112,20 +113,19 @@ export const contratoService = {
     return data
   },
 
-  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
-  async alterarStatus(id, novoStatus, usuario) {
+  async alterarStatus(id, novoStatus) {
     await ensureLoaded()
-    cache = cache.map((c) => {
-      if (c.id !== id) return c
-      const atualizado = {
-        ...c,
-        status: novoStatus,
-        responsavelAtual: STATUS_EM_PROCESSO.includes(novoStatus) ? c.responsavelAtual : null,
-        dataAssinatura: novoStatus === 'vigente' && !c.dataAssinatura ? hojeISO() : c.dataAssinatura,
-      }
-      return addEvento(atualizado, `Status alterado para "${novoStatus}"`, usuario)
-    })
-    return cache.find((c) => c.id === id)
+    const contrato = cache.find((c) => c.id === id)
+    const body = {
+      cFILIAL: contrato?.filial || '',
+      cNUMERO: id,
+      cSTATUS: STATUS_REVERSE[novoStatus] || '',
+    }
+    await protheusApi.post(ALTERAR_STATUS_URL, body)
+    // Força buscar os dados atualizados (status, responsavelAtual, dataAssinatura,
+    // historico) na próxima chamada, já que o Protheus trata esses efeitos colaterais
+    cache = null
+    return contrato
   },
 
   // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão

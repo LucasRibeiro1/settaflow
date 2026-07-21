@@ -53,6 +53,7 @@ const MODALIDADE_REVERSE = invert(MODALIDADE_MAP)
 const TIPO_SEGURO_REVERSE = invert(TIPO_SEGURO_MAP)
 const MINUTAGEM_REVERSE = invert(MINUTAGEM_MAP)
 const ASSINANTE_REVERSE = invert(ASSINANTE_MAP)
+export const STATUS_REVERSE = invert(STATUS_MAP)
 
 // Converte "YYYY-MM-DD" -> "YYYYMMDD"
 export function toProtheusDate(isoStr) {
