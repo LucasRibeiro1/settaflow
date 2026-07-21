@@ -1,16 +1,17 @@
 import protheusApi from './protheusApi'
 import { extractArray } from '../utils/apiMappers'
-import { mapContrato } from '../utils/contratoMappers'
+import { mapContrato, toProtheusPayload } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 
-const LISTAR_URL = '/rest/STWF09/listar/'
+const LISTAR_URL = '/rest/STWSF09/listar/'
+const GRAVAR_URL = '/rest/STWSF09P/gravar'
 
-// Cache em memória: a listagem já é real (STWF09); as ações de escrita abaixo
-// (criar, alterar status, análise técnica, tratativa) ainda não têm rotina no
-// Protheus, então mutam esse cache localmente até os próximos endpoints chegarem.
+// Cache em memória: listagem e criação já são reais (STWF09/STWSF09P); as
+// demais ações de escrita abaixo (alterar status, análise técnica, tratativa)
+// ainda não têm rotina no Protheus, então mutam esse cache localmente até os
+// próximos endpoints chegarem.
 let cache = null
 let fetchPromise = null
-let nextSeq = 1
 
 async function ensureLoaded() {
   if (cache) return cache
@@ -19,7 +20,6 @@ async function ensureLoaded() {
       .get(LISTAR_URL)
       .then(({ data }) => {
         cache = extractArray(data).map(mapContrato)
-        nextSeq = cache.length + 1
         fetchPromise = null
         return cache
       })
@@ -65,26 +65,16 @@ export const contratoService = {
     return cache.filter((c) => STATUS_EM_PROCESSO.includes(c.status) && c.responsavelAtual === username)
   },
 
-  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
   async criarContrato(payload, solicitante) {
-    await ensureLoaded()
-    const seq = nextSeq++
-    const novo = {
-      id: `${payload.empresa}-${String(1000 + seq)}`,
-      numero: `${payload.empresa}-${String(1000 + seq)}`,
-      status: 'em_analise',
-      responsavelAtual: 'Ana Costa',
-      dataSolicitacao: hojeISO(),
-      solicitante: solicitante || 'Usuário',
-      dataAssinatura: null,
-      dataVencimento: null,
-      analiseTecnica: '',
-      historico: [{ data: hojeISO(), evento: 'Solicitação criada', usuario: solicitante || 'Usuário' }],
-      tratativas: [],
+    const body = toProtheusPayload({
       ...payload,
-    }
-    cache = [novo, ...cache]
-    return novo
+      dataSolicitacao: payload.dataSolicitacao || hojeISO(),
+      solicitante: payload.solicitante || solicitante || '',
+    })
+    const { data } = await protheusApi.post(GRAVAR_URL, body)
+    // Força buscar a listagem atualizada (com o contrato recém-criado) na próxima chamada
+    cache = null
+    return data
   },
 
   // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão

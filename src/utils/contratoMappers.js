@@ -43,6 +43,24 @@ function toBool(v) {
   return v === true || v === 'true' || v === 'S' || v === 's' || v === 1 || v === '1'
 }
 
+function invert(map) {
+  return Object.fromEntries(Object.entries(map).map(([k, v]) => [v, k]))
+}
+
+const TIPO_REVERSE = invert(TIPO_MAP)
+const ESPECIE_REVERSE = invert(ESPECIE_MAP)
+const MODALIDADE_REVERSE = invert(MODALIDADE_MAP)
+const TIPO_SEGURO_REVERSE = invert(TIPO_SEGURO_MAP)
+const MINUTAGEM_REVERSE = invert(MINUTAGEM_MAP)
+const ASSINANTE_REVERSE = invert(ASSINANTE_MAP)
+
+// Converte "YYYY-MM-DD" -> "YYYYMMDD"
+function toProtheusDate(isoStr) {
+  if (!isoStr) return ''
+  const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return match ? `${match[1]}${match[2]}${match[3]}` : ''
+}
+
 // Converte Date -> "YYYY-MM-DD" (o app trabalha com data em string ISO, não Date)
 function isoDate(d) {
   if (!d) return null
@@ -96,5 +114,43 @@ export function mapContrato(raw) {
     analiseTecnica: String(raw.ANEXOTEC ?? '').trim(),
     historico: [],
     tratativas: [],
+  }
+}
+
+// Monta o payload pro POST /rest/STWSF09P/gravar a partir do formato interno
+export function toProtheusPayload(payload) {
+  const seguro = payload.seguroGarantia === 'sim'
+
+  return {
+    cFILIAL: payload.filial || '',
+    cNUMERO: payload.numero || '',
+    cEMPRES: payload.empresa || '',
+    cTIPCTR: TIPO_REVERSE[payload.tipoContrato] || '',
+    cANLOC: payload.anexoLocacao || '',
+    cESPECI: ESPECIE_REVERSE[payload.especie] || '',
+    cNDACF: payload.ndaInfo?.includes('contabeis_financeiras') ? 'S' : 'N',
+    cNDATEC: payload.ndaInfo?.includes('tecnicas') ? 'S' : 'N',
+    cMODCTR: MODALIDADE_REVERSE[payload.modalidade] || '',
+    cCTRORI: payload.contratoOriginal || '',
+    cSEGGAR: seguro ? 'S' : 'N',
+    cTPSEG: seguro ? (TIPO_SEGURO_REVERSE[payload.tipoSeguro] || '') : '',
+    cMINUTA: MINUTAGEM_REVERSE[payload.minutagem] || '',
+    cANMIN: payload.anexoMinuta || '',
+    cCODCLI: payload.clienteCodigo || '',
+    cLOJA: payload.loja || '',
+    cNOMCLI: payload.clienteNome || '',
+    cCGCCLI: payload.clienteCnpj || '',
+    cEMACLI: payload.clienteEmail || '',
+    cASSINA: ASSINANTE_REVERSE[payload.assinante] || '',
+    cANPROC: payload.anexoProcuracao || '',
+    cANCOM: payload.anexoPropostaComercial || '',
+    cOBSERV: payload.observacoes || '',
+    cDTSOLI: toProtheusDate(payload.dataSolicitacao),
+    cSOLICI: payload.solicitante || '',
+    cSTATUS: '1',
+    cRESPAT: '',
+    cDTASSI: '',
+    cDTVENC: '',
+    cANATEC: '',
   }
 }
