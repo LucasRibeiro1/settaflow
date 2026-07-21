@@ -2,6 +2,12 @@ import protheusApi from './protheusApi'
 import { extractArray } from '../utils/apiMappers'
 import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload, toProtheusDate, STATUS_REVERSE } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
+import { mockContratos } from '../mocks/contratos'
+
+// Temporariamente em modo mock (demonstração/reunião) — a API real (STWSF09,
+// STWSF10, STWSF11, STWSF12P) está apresentando 500/timeout em produção.
+// Desligar assim que o backend estiver estável de novo.
+const USE_MOCK = true
 
 const LISTAR_URL = '/rest/STWSF09/listar/'
 const GRAVAR_URL = '/rest/STWSF09P/gravar'
@@ -10,10 +16,8 @@ const TRATATIVA_GRAVAR_URL = '/rest/STWSF10P/gravar'
 const TRATATIVAS_URL = '/rest/STWSF11/listar/'
 const ALTERAR_STATUS_URL = '/rest/STWSF12P/alterar'
 
-// Cache em memória: listagem, criação, histórico, tratativas e alterar status
-// já são reais (STWSF09, STWSF09P, STWSF10, STWSF10P, STWSF11, STWSF12P); só
-// a análise técnica ainda não tem rotina no Protheus, e muta o cache
-// localmente até o endpoint chegar.
+// Cache em memória — no modo mock, seed único a partir de mockContratos;
+// no modo real, populado a partir da API (listagem, histórico, tratativas).
 let cache = null
 let fetchPromise = null
 
@@ -38,7 +42,7 @@ function getOuVazio(url, nome) {
   })
 }
 
-async function ensureLoaded() {
+async function ensureLoadedReal() {
   if (cache) return cache
   if (!fetchPromise) {
     fetchPromise = Promise.all([
@@ -65,6 +69,15 @@ async function ensureLoaded() {
       })
   }
   return fetchPromise
+}
+
+function ensureLoadedMock() {
+  if (!cache) cache = [...mockContratos]
+  return cache
+}
+
+async function ensureLoaded() {
+  return USE_MOCK ? ensureLoadedMock() : ensureLoadedReal()
 }
 
 function hojeISO() {
@@ -102,6 +115,27 @@ export const contratoService = {
   },
 
   async criarContrato(payload, solicitante) {
+    if (USE_MOCK) {
+      await ensureLoaded()
+      const quemSolicitou = payload.solicitante || solicitante || 'Usuário'
+      const novo = {
+        id: `CTR-${String(1000 + cache.length + 1)}`,
+        numero: `${payload.empresa}-${String(1000 + cache.length + 1)}`,
+        status: 'em_analise',
+        responsavelAtual: 'Ana Costa',
+        dataSolicitacao: hojeISO(),
+        dataAssinatura: null,
+        dataVencimento: null,
+        analiseTecnica: '',
+        historico: [{ data: hojeISO(), evento: 'Solicitação criada', usuario: quemSolicitou }],
+        tratativas: [],
+        ...payload,
+        solicitante: quemSolicitou,
+      }
+      cache = [novo, ...cache]
+      return novo
+    }
+
     const body = toProtheusPayload({
       ...payload,
       dataSolicitacao: payload.dataSolicitacao || hojeISO(),
@@ -113,7 +147,22 @@ export const contratoService = {
     return data
   },
 
-  async alterarStatus(id, novoStatus) {
+  async alterarStatus(id, novoStatus, usuario) {
+    if (USE_MOCK) {
+      await ensureLoaded()
+      cache = cache.map((c) => {
+        if (c.id !== id) return c
+        const atualizado = {
+          ...c,
+          status: novoStatus,
+          responsavelAtual: STATUS_EM_PROCESSO.includes(novoStatus) ? c.responsavelAtual : null,
+          dataAssinatura: novoStatus === 'vigente' && !c.dataAssinatura ? hojeISO() : c.dataAssinatura,
+        }
+        return addEvento(atualizado, `Status alterado para "${novoStatus}"`, usuario)
+      })
+      return cache.find((c) => c.id === id)
+    }
+
     await ensureLoaded()
     const contrato = cache.find((c) => c.id === id)
     const body = {
@@ -140,6 +189,16 @@ export const contratoService = {
   },
 
   async adicionarTratativa(id, observacao, usuario) {
+    if (USE_MOCK) {
+      await ensureLoaded()
+      cache = cache.map((c) => {
+        if (c.id !== id) return c
+        const nova = { data: hojeISO(), usuario: usuario || 'Sistema', observacao }
+        return { ...c, tratativas: [...(c.tratativas || []), nova] }
+      })
+      return cache.find((c) => c.id === id)
+    }
+
     await ensureLoaded()
     const contrato = cache.find((c) => c.id === id)
     const body = {
