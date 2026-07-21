@@ -1,11 +1,12 @@
 import protheusApi from './protheusApi'
 import { extractArray } from '../utils/apiMappers'
-import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload } from '../utils/contratoMappers'
+import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload, toProtheusDate } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 
 const LISTAR_URL = '/rest/STWSF09/listar/'
 const GRAVAR_URL = '/rest/STWSF09P/gravar'
 const HISTORICO_URL = '/rest/STWSF10/listar/'
+const TRATATIVA_GRAVAR_URL = '/rest/STWSF10P/gravar'
 const TRATATIVAS_URL = '/rest/STWSF11/listar/'
 
 // Cache em memória: listagem, criação, histórico e tratativas já são reais
@@ -138,15 +139,20 @@ export const contratoService = {
     return cache.find((c) => c.id === id)
   },
 
-  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
   async adicionarTratativa(id, observacao, usuario) {
     await ensureLoaded()
-    cache = cache.map((c) => {
-      if (c.id !== id) return c
-      const nova = { data: hojeISO(), usuario: usuario || 'Sistema', observacao }
-      return { ...c, tratativas: [...(c.tratativas || []), nova] }
-    })
-    return cache.find((c) => c.id === id)
+    const contrato = cache.find((c) => c.id === id)
+    const body = {
+      cFILIAL: contrato?.filial || '',
+      cNUMERO: id,
+      cDATA: toProtheusDate(hojeISO()),
+      cEVENTO: observacao,
+      cUSUARIO: usuario || 'Sistema',
+    }
+    await protheusApi.post(TRATATIVA_GRAVAR_URL, body)
+    // Força buscar a lista de tratativas atualizada (via STWSF11) na próxima chamada
+    cache = null
+    return contrato
   },
 
   invalidateCache() {
