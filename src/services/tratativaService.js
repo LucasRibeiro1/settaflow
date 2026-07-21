@@ -4,7 +4,7 @@ import { mockTratativas } from '../mocks/tratativas'
 
 const USE_MOCK = false
 
-const POST_URL = '/rest/STWSF03/gravar'   // gravação
+const POST_URL = '/rest/STWSF03P/gravar'  // gravação
 const GET_URL  = '/rest/STWSF03/listar'   // consulta
 
 let mockData = [...mockTratativas]
@@ -41,7 +41,7 @@ function parseProtheusTime(raw) {
   return null
 }
 
-// Monta o payload no formato esperado pela API STWSF03/gravar
+// Monta o payload no formato esperado pela API STWSF03P/gravar
 function toProtheusPayload(payload) {
   const clienteIdStr = String(payload.clienteId || '')
   const dashIdx = clienteIdStr.lastIndexOf('-')
