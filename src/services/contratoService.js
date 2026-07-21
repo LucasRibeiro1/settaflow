@@ -1,12 +1,35 @@
-import { mockContratos } from '../mocks/contratos'
+import protheusApi from './protheusApi'
+import { extractArray } from '../utils/apiMappers'
+import { mapContrato } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 
-// Ainda não existe rotina no Protheus para contratos jurídicos — módulo
-// roda 100% sobre dados simulados até o back-end real ficar disponível.
-const USE_MOCK = true
+const LISTAR_URL = '/rest/STWF09/listar/'
 
-let mockData = [...mockContratos]
-let nextSeq = mockData.length + 1
+// Cache em memória: a listagem já é real (STWF09); as ações de escrita abaixo
+// (criar, alterar status, análise técnica, tratativa) ainda não têm rotina no
+// Protheus, então mutam esse cache localmente até os próximos endpoints chegarem.
+let cache = null
+let fetchPromise = null
+let nextSeq = 1
+
+async function ensureLoaded() {
+  if (cache) return cache
+  if (!fetchPromise) {
+    fetchPromise = protheusApi
+      .get(LISTAR_URL)
+      .then(({ data }) => {
+        cache = extractArray(data).map(mapContrato)
+        nextSeq = cache.length + 1
+        fetchPromise = null
+        return cache
+      })
+      .catch((err) => {
+        fetchPromise = null
+        throw err
+      })
+  }
+  return fetchPromise
+}
 
 function hojeISO() {
   const d = new Date()
@@ -22,8 +45,7 @@ function addEvento(contrato, evento, usuario) {
 
 export const contratoService = {
   async getContratos(params = {}) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
-    let result = [...mockData]
+    let result = [...(await ensureLoaded())]
     if (params.empresa) result = result.filter((c) => c.empresa === params.empresa)
     if (params.tipoContrato) result = result.filter((c) => c.tipoContrato === params.tipoContrato)
     if (params.status) result = result.filter((c) => c.status === params.status)
@@ -31,24 +53,25 @@ export const contratoService = {
   },
 
   async getContrato(id) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
-    const contrato = mockData.find((c) => c.id === id)
+    await ensureLoaded()
+    const contrato = cache.find((c) => c.id === id)
     if (!contrato) throw new Error(`Contrato '${id}' não encontrado`)
     return contrato
   },
 
   // Fila do jurídico: contratos com ação pendente atribuída ao usuário logado
   async getMinhaFila(username) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
-    return mockData.filter((c) => STATUS_EM_PROCESSO.includes(c.status) && c.responsavelAtual === username)
+    await ensureLoaded()
+    return cache.filter((c) => STATUS_EM_PROCESSO.includes(c.status) && c.responsavelAtual === username)
   },
 
+  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
   async criarContrato(payload, solicitante) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
+    await ensureLoaded()
     const seq = nextSeq++
     const novo = {
-      id: `CTR-${String(1000 + mockData.length + seq)}`,
-      numero: `${payload.empresa}-${String(1000 + mockData.length + seq)}`,
+      id: `${payload.empresa}-${String(1000 + seq)}`,
+      numero: `${payload.empresa}-${String(1000 + seq)}`,
       status: 'em_analise',
       responsavelAtual: 'Ana Costa',
       dataSolicitacao: hojeISO(),
@@ -60,13 +83,14 @@ export const contratoService = {
       tratativas: [],
       ...payload,
     }
-    mockData = [novo, ...mockData]
+    cache = [novo, ...cache]
     return novo
   },
 
+  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
   async alterarStatus(id, novoStatus, usuario) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
-    mockData = mockData.map((c) => {
+    await ensureLoaded()
+    cache = cache.map((c) => {
       if (c.id !== id) return c
       const atualizado = {
         ...c,
@@ -76,27 +100,33 @@ export const contratoService = {
       }
       return addEvento(atualizado, `Status alterado para "${novoStatus}"`, usuario)
     })
-    return mockData.find((c) => c.id === id)
+    return cache.find((c) => c.id === id)
   },
 
+  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
   async enviarAnaliseTecnica(id, observacao, usuario) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
-    mockData = mockData.map((c) => {
+    await ensureLoaded()
+    cache = cache.map((c) => {
       if (c.id !== id) return c
       const atualizado = { ...c, analiseTecnica: observacao }
       return addEvento(atualizado, 'Análise técnica enviada ao solicitante', usuario)
     })
-    return mockData.find((c) => c.id === id)
+    return cache.find((c) => c.id === id)
   },
 
-  // Registra uma tratativa/observação no histórico do contrato
+  // TODO: ainda sem rotina de gravação no Protheus — grava só no cache local da sessão
   async adicionarTratativa(id, observacao, usuario) {
-    if (!USE_MOCK) throw new Error('API de contratos ainda não disponível')
-    mockData = mockData.map((c) => {
+    await ensureLoaded()
+    cache = cache.map((c) => {
       if (c.id !== id) return c
       const nova = { data: hojeISO(), usuario: usuario || 'Sistema', observacao }
       return { ...c, tratativas: [...(c.tratativas || []), nova] }
     })
-    return mockData.find((c) => c.id === id)
+    return cache.find((c) => c.id === id)
+  },
+
+  invalidateCache() {
+    cache = null
+    fetchPromise = null
   },
 }
