@@ -1,45 +1,57 @@
 import protheusApi from './protheusApi'
 import { extractArray } from '../utils/apiMappers'
-import { mapContrato, mapHistorico, toProtheusPayload } from '../utils/contratoMappers'
+import { mapContrato, mapHistorico, mapTratativa, toProtheusPayload } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 
 const LISTAR_URL = '/rest/STWSF09/listar/'
 const GRAVAR_URL = '/rest/STWSF09P/gravar'
 const HISTORICO_URL = '/rest/STWSF10/listar/'
+const TRATATIVAS_URL = '/rest/STWSF11/listar/'
 
-// Cache em memória: listagem, criação e histórico já são reais (STWSF09,
-// STWSF09P, STWSF10); as demais ações de escrita abaixo (alterar status,
-// análise técnica, tratativa) ainda não têm rotina no Protheus, então mutam
-// esse cache localmente até os próximos endpoints chegarem.
+// Cache em memória: listagem, criação, histórico e tratativas já são reais
+// (STWSF09, STWSF09P, STWSF10, STWSF11); as demais ações de escrita abaixo
+// (alterar status, análise técnica) ainda não têm rotina no Protheus, então
+// mutam esse cache localmente até os próximos endpoints chegarem.
 let cache = null
 let fetchPromise = null
+
+function agrupaPorNumero(lista) {
+  const porNumero = {}
+  for (const item of lista) {
+    if (!porNumero[item.numero]) porNumero[item.numero] = []
+    porNumero[item.numero].push(item)
+  }
+  for (const grupo of Object.values(porNumero)) {
+    grupo.sort((a, b) => (a.data < b.data ? -1 : 1))
+  }
+  return porNumero
+}
+
+// Uma lista auxiliar não pode derrubar a listagem inteira se falhar — o
+// contrato fica só sem aquela informação, em vez de quebrar tudo.
+function getOuVazio(url, nome) {
+  return protheusApi.get(url).catch((err) => {
+    console.error(`[Contratos] falha ao buscar ${nome} (${url}):`, err?.message || err)
+    return { data: [] }
+  })
+}
 
 async function ensureLoaded() {
   if (cache) return cache
   if (!fetchPromise) {
     fetchPromise = Promise.all([
       protheusApi.get(LISTAR_URL),
-      // Histórico não pode derrubar a listagem inteira se falhar — contratos ficam sem
-      // histórico nesse caso, em vez de quebrar Dashboard/Contratos/Minha Fila.
-      protheusApi.get(HISTORICO_URL).catch((err) => {
-        console.error('[Contratos] falha ao buscar histórico (STWSF10):', err?.message || err)
-        return { data: [] }
-      }),
+      getOuVazio(HISTORICO_URL, 'histórico'),
+      getOuVazio(TRATATIVAS_URL, 'tratativas'),
     ])
-      .then(([contratosRes, historicoRes]) => {
-        const historicoPorNumero = {}
-        for (const raw of extractArray(historicoRes.data)) {
-          const h = mapHistorico(raw)
-          if (!historicoPorNumero[h.numero]) historicoPorNumero[h.numero] = []
-          historicoPorNumero[h.numero].push(h)
-        }
-        for (const lista of Object.values(historicoPorNumero)) {
-          lista.sort((a, b) => (a.data < b.data ? -1 : 1))
-        }
+      .then(([contratosRes, historicoRes, tratativasRes]) => {
+        const historicoPorNumero = agrupaPorNumero(extractArray(historicoRes.data).map(mapHistorico))
+        const tratativasPorNumero = agrupaPorNumero(extractArray(tratativasRes.data).map(mapTratativa))
 
         cache = extractArray(contratosRes.data).map((raw) => {
           const contrato = mapContrato(raw)
           contrato.historico = historicoPorNumero[contrato.numero] || []
+          contrato.tratativas = tratativasPorNumero[contrato.numero] || []
           return contrato
         })
         fetchPromise = null

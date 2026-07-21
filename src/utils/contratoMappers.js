@@ -128,6 +128,18 @@ export function mapHistorico(raw) {
   }
 }
 
+// Converte o retorno de /STWSF11/listar/ (tratativas/observações) pro formato interno
+// Mesma estrutura do histórico, mas o campo EVENTO carrega o texto da tratativa.
+export function mapTratativa(raw) {
+  return {
+    numero: String(raw.NUMERO ?? '').trim(),
+    filial: String(raw.FILIAL ?? '').trim(),
+    data: isoDate(parseProtheusDate(raw.DATA)),
+    usuario: String(raw.USUARIO ?? '').trim(),
+    observacao: String(raw.EVENTO ?? '').trim(),
+  }
+}
+
 // Monta o payload pro POST /rest/STWSF09P/gravar a partir do formato interno
 export function toProtheusPayload(payload) {
   const seguro = payload.seguroGarantia === 'sim'
