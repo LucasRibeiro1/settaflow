@@ -16,6 +16,7 @@ export default defineConfig({
         target: 'http://177.85.6.66:8091',
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path.replace(/^\/rest/, '/rest01'),
       },
     },
   },

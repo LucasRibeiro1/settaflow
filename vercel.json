@@ -6,7 +6,7 @@
     },
     {
       "source": "/rest/:path*",
-      "destination": "http://177.85.6.66:8091/rest/:path*"
+      "destination": "http://177.85.6.66:8091/rest01/:path*"
     }
   ]
 }
