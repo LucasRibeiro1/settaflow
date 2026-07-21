@@ -1,25 +1,47 @@
 import protheusApi from './protheusApi'
 import { extractArray } from '../utils/apiMappers'
-import { mapContrato, toProtheusPayload } from '../utils/contratoMappers'
+import { mapContrato, mapHistorico, toProtheusPayload } from '../utils/contratoMappers'
 import { STATUS_EM_PROCESSO } from '../utils/contratoConstants'
 
 const LISTAR_URL = '/rest/STWSF09/listar/'
 const GRAVAR_URL = '/rest/STWSF09P/gravar'
+const HISTORICO_URL = '/rest/STWSF10/listar/'
 
-// Cache em memória: listagem e criação já são reais (STWF09/STWSF09P); as
-// demais ações de escrita abaixo (alterar status, análise técnica, tratativa)
-// ainda não têm rotina no Protheus, então mutam esse cache localmente até os
-// próximos endpoints chegarem.
+// Cache em memória: listagem, criação e histórico já são reais (STWSF09,
+// STWSF09P, STWSF10); as demais ações de escrita abaixo (alterar status,
+// análise técnica, tratativa) ainda não têm rotina no Protheus, então mutam
+// esse cache localmente até os próximos endpoints chegarem.
 let cache = null
 let fetchPromise = null
 
 async function ensureLoaded() {
   if (cache) return cache
   if (!fetchPromise) {
-    fetchPromise = protheusApi
-      .get(LISTAR_URL)
-      .then(({ data }) => {
-        cache = extractArray(data).map(mapContrato)
+    fetchPromise = Promise.all([
+      protheusApi.get(LISTAR_URL),
+      // Histórico não pode derrubar a listagem inteira se falhar — contratos ficam sem
+      // histórico nesse caso, em vez de quebrar Dashboard/Contratos/Minha Fila.
+      protheusApi.get(HISTORICO_URL).catch((err) => {
+        console.error('[Contratos] falha ao buscar histórico (STWSF10):', err?.message || err)
+        return { data: [] }
+      }),
+    ])
+      .then(([contratosRes, historicoRes]) => {
+        const historicoPorNumero = {}
+        for (const raw of extractArray(historicoRes.data)) {
+          const h = mapHistorico(raw)
+          if (!historicoPorNumero[h.numero]) historicoPorNumero[h.numero] = []
+          historicoPorNumero[h.numero].push(h)
+        }
+        for (const lista of Object.values(historicoPorNumero)) {
+          lista.sort((a, b) => (a.data < b.data ? -1 : 1))
+        }
+
+        cache = extractArray(contratosRes.data).map((raw) => {
+          const contrato = mapContrato(raw)
+          contrato.historico = historicoPorNumero[contrato.numero] || []
+          return contrato
+        })
         fetchPromise = null
         return cache
       })

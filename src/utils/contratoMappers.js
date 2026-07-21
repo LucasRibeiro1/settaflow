@@ -73,7 +73,7 @@ function codigo(v) {
   return Number.isNaN(n) ? null : n
 }
 
-// Converte o retorno de /STWF09/listar/ pro formato interno usado no front
+// Converte o retorno de /STWSF09/listar/ pro formato interno usado no front
 export function mapContrato(raw) {
   const numero = String(raw.NUMERO ?? '').trim()
   const seguro = toBool(raw.SEGGAR)
@@ -114,6 +114,17 @@ export function mapContrato(raw) {
     analiseTecnica: String(raw.ANEXOTEC ?? '').trim(),
     historico: [],
     tratativas: [],
+  }
+}
+
+// Converte o retorno de /STWSF10/listar/ (histórico de eventos) pro formato interno
+export function mapHistorico(raw) {
+  return {
+    numero: String(raw.NUMERO ?? '').trim(),
+    filial: String(raw.FILIAL ?? '').trim(),
+    data: isoDate(parseProtheusDate(raw.DATA)),
+    evento: String(raw.EVENTO ?? '').trim(),
+    usuario: String(raw.USUARIO ?? '').trim(),
   }
 }
 
