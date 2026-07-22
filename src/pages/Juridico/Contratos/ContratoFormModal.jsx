@@ -75,8 +75,6 @@ export function ContratoFormModal({ open, onClose, onSubmit, saving }) {
   }
 
   const isValid = form.clienteNome.trim() && form.clienteCnpj.trim() && form.solicitante.trim()
-    && (form.tipoContrato !== 'locacao' || form.anexoLocacao)
-    && (form.assinante !== 'procurador' || form.anexoProcuracao)
 
   const handleSubmit = () => {
     if (!isValid) return
@@ -116,7 +114,7 @@ export function ContratoFormModal({ open, onClose, onSubmit, saving }) {
 
           {form.tipoContrato === 'locacao' && (
             <div style={{ marginTop: 12 }}>
-              <AnexoField label="Anexo do Documento de Locação" value={form.anexoLocacao} onChange={set('anexoLocacao')} required />
+              <AnexoField label="Anexo do Documento de Locação" value={form.anexoLocacao} onChange={set('anexoLocacao')} />
             </div>
           )}
 
@@ -187,7 +185,7 @@ export function ContratoFormModal({ open, onClose, onSubmit, saving }) {
               {ASSINANTE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </Select>
             {form.assinante === 'procurador' && (
-              <AnexoField label="Anexo da Procuração" value={form.anexoProcuracao} onChange={set('anexoProcuracao')} required />
+              <AnexoField label="Anexo da Procuração" value={form.anexoProcuracao} onChange={set('anexoProcuracao')} />
             )}
           </div>
         </div>
