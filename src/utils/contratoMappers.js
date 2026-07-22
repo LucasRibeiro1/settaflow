@@ -55,11 +55,13 @@ const MINUTAGEM_REVERSE = invert(MINUTAGEM_MAP)
 const ASSINANTE_REVERSE = invert(ASSINANTE_MAP)
 export const STATUS_REVERSE = invert(STATUS_MAP)
 
-// Converte "YYYY-MM-DD" -> "YYYYMMDD"
+// Normaliza pra "YYYY-MM-DD" — esse formato (com traços) é reconhecido pelo
+// parser de JSON do Protheus como tipo Data (D), diferente de "YYYYMMDD"
+// que fica como Character (C).
 export function toProtheusDate(isoStr) {
   if (!isoStr) return ''
   const match = String(isoStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
-  return match ? `${match[1]}${match[2]}${match[3]}` : ''
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : ''
 }
 
 // Converte Date -> "YYYY-MM-DD" (o app trabalha com data em string ISO, não Date)
